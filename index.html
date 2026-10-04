@@ -280,6 +280,40 @@
       font-size: 13px;
     }
 
+    .user-panel {
+      width: 90%;
+      max-width: 390px;
+      margin-top: 15px;
+      padding: 16px;
+      border-radius: 16px;
+      background: rgba(117, 103, 255, 0.08);
+      border: 1px solid rgba(117, 103, 255, 0.2);
+    }
+
+    .user-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .user-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 15px;
+      padding: 7px 0;
+      font-size: 12px;
+    }
+
+    .user-label {
+      opacity: 0.5;
+    }
+
+    .user-value {
+      text-align: right;
+      word-break: break-all;
+      font-weight: 600;
+    }
+
     .hint {
       margin-top: 22px;
       font-size: 12px;
@@ -423,6 +457,42 @@
 
     </section>
 
+    <section class="user-panel">
+
+      <div class="user-title">
+        👤 Telegram User
+      </div>
+
+      <div class="user-row">
+        <span class="user-label">First Name</span>
+        <span class="user-value" id="telegramFirstName">
+          Loading...
+        </span>
+      </div>
+
+      <div class="user-row">
+        <span class="user-label">Username</span>
+        <span class="user-value" id="telegramUsername">
+          Loading...
+        </span>
+      </div>
+
+      <div class="user-row">
+        <span class="user-label">User ID</span>
+        <span class="user-value" id="telegramUserId">
+          Loading...
+        </span>
+      </div>
+
+      <div class="user-row">
+        <span class="user-label">Start Parameter</span>
+        <span class="user-value" id="startParameter">
+          None
+        </span>
+      </div>
+
+    </section>
+
     <div class="hint">
       Tap to collect coins
     </div>
@@ -441,15 +511,21 @@
     const ENERGY_PER_TAP = 1;
     const ENERGY_RECHARGE_TIME = 3000;
 
-    let balance = Number(localStorage.getItem("qivo_balance")) || 0;
-    let energy = Number(localStorage.getItem("qivo_energy"));
+    let balance =
+      Number(localStorage.getItem("qivo_balance")) || 0;
+
+    let energy =
+      Number(localStorage.getItem("qivo_energy"));
 
     if (isNaN(energy)) {
       energy = MAX_ENERGY;
     }
 
-    let level = Number(localStorage.getItem("qivo_level")) || 1;
-    let tapPower = Number(localStorage.getItem("qivo_tap_power")) || 1;
+    let level =
+      Number(localStorage.getItem("qivo_level")) || 1;
+
+    let tapPower =
+      Number(localStorage.getItem("qivo_tap_power")) || 1;
 
     let lastDailyReward =
       Number(localStorage.getItem("qivo_daily_reward")) || 0;
@@ -457,15 +533,29 @@
     let referralCount =
       Number(localStorage.getItem("qivo_referral_count")) || 0;
 
-    const balanceElement = document.getElementById("balance");
-    const energyText = document.getElementById("energyText");
-    const energyFill = document.getElementById("energyFill");
-    const levelElement = document.getElementById("level");
-    const tapPowerElement = document.getElementById("tapPower");
+    const balanceElement =
+      document.getElementById("balance");
 
-    const tapButton = document.getElementById("tapButton");
-    const dailyButton = document.getElementById("dailyButton");
-    const upgradeButton = document.getElementById("upgradeButton");
+    const energyText =
+      document.getElementById("energyText");
+
+    const energyFill =
+      document.getElementById("energyFill");
+
+    const levelElement =
+      document.getElementById("level");
+
+    const tapPowerElement =
+      document.getElementById("tapPower");
+
+    const tapButton =
+      document.getElementById("tapButton");
+
+    const dailyButton =
+      document.getElementById("dailyButton");
+
+    const upgradeButton =
+      document.getElementById("upgradeButton");
 
     const referralLinkElement =
       document.getElementById("referralLink");
@@ -476,16 +566,53 @@
     const referralCountElement =
       document.getElementById("referralCount");
 
+    const telegramFirstName =
+      document.getElementById("telegramFirstName");
+
+    const telegramUsername =
+      document.getElementById("telegramUsername");
+
+    const telegramUserId =
+      document.getElementById("telegramUserId");
+
+    const startParameter =
+      document.getElementById("startParameter");
+
     function saveData() {
-      localStorage.setItem("qivo_balance", balance);
-      localStorage.setItem("qivo_energy", energy);
-      localStorage.setItem("qivo_level", level);
-      localStorage.setItem("qivo_tap_power", tapPower);
-      localStorage.setItem("qivo_daily_reward", lastDailyReward);
-      localStorage.setItem("qivo_referral_count", referralCount);
+
+      localStorage.setItem(
+        "qivo_balance",
+        balance
+      );
+
+      localStorage.setItem(
+        "qivo_energy",
+        energy
+      );
+
+      localStorage.setItem(
+        "qivo_level",
+        level
+      );
+
+      localStorage.setItem(
+        "qivo_tap_power",
+        tapPower
+      );
+
+      localStorage.setItem(
+        "qivo_daily_reward",
+        lastDailyReward
+      );
+
+      localStorage.setItem(
+        "qivo_referral_count",
+        referralCount
+      );
     }
 
     function updateUI() {
+
       balanceElement.textContent =
         balance.toLocaleString("en-US");
 
@@ -495,114 +622,205 @@
       energyFill.style.width =
         (energy / MAX_ENERGY * 100) + "%";
 
-      levelElement.textContent = level;
-      tapPowerElement.textContent = tapPower;
-      referralCountElement.textContent = referralCount;
+      levelElement.textContent =
+        level;
+
+      tapPowerElement.textContent =
+        tapPower;
+
+      referralCountElement.textContent =
+        referralCount;
     }
 
-    tapButton.addEventListener("click", function () {
+    function loadTelegramUser() {
 
-      if (energy < ENERGY_PER_TAP) {
+      if (
+        !tg ||
+        !tg.initDataUnsafe ||
+        !tg.initDataUnsafe.user
+      ) {
+
+        telegramFirstName.textContent =
+          "Not available";
+
+        telegramUsername.textContent =
+          "Not available";
+
+        telegramUserId.textContent =
+          "Not available";
+
         return;
       }
 
-      balance += tapPower;
-      energy -= ENERGY_PER_TAP;
+      const user =
+        tg.initDataUnsafe.user;
 
-      saveData();
-      updateUI();
-    });
+      telegramFirstName.textContent =
+        user.first_name || "Unknown";
 
-    setInterval(function () {
+      telegramUsername.textContent =
+        user.username
+          ? "@" + user.username
+          : "No username";
 
-      if (energy < MAX_ENERGY) {
-        energy += 1;
+      telegramUserId.textContent =
+        String(user.id);
 
-        if (energy > MAX_ENERGY) {
-          energy = MAX_ENERGY;
+      const parameter =
+        tg.initDataUnsafe.start_param;
+
+      if (parameter) {
+        startParameter.textContent =
+          parameter;
+      } else {
+        startParameter.textContent =
+          "None";
+      }
+    }
+
+    tapButton.addEventListener(
+      "click",
+      function () {
+
+        if (energy < ENERGY_PER_TAP) {
+          return;
         }
+
+        balance += tapPower;
+        energy -= ENERGY_PER_TAP;
 
         saveData();
         updateUI();
       }
+    );
 
-    }, ENERGY_RECHARGE_TIME);
+    setInterval(
+      function () {
 
-    dailyButton.addEventListener("click", function () {
+        if (energy < MAX_ENERGY) {
 
-      const now = Date.now();
-      const oneDay = 24 * 60 * 60 * 1000;
+          energy += 1;
 
-      if (now - lastDailyReward < oneDay) {
+          if (energy > MAX_ENERGY) {
+            energy = MAX_ENERGY;
+          }
 
-        const remaining =
-          oneDay - (now - lastDailyReward);
+          saveData();
+          updateUI();
+        }
 
-        const hours =
-          Math.ceil(remaining / (60 * 60 * 1000));
+      },
+      ENERGY_RECHARGE_TIME
+    );
+
+    dailyButton.addEventListener(
+      "click",
+      function () {
+
+        const now =
+          Date.now();
+
+        const oneDay =
+          24 * 60 * 60 * 1000;
+
+        if (
+          now - lastDailyReward <
+          oneDay
+        ) {
+
+          const remaining =
+            oneDay -
+            (now - lastDailyReward);
+
+          const hours =
+            Math.ceil(
+              remaining /
+              (60 * 60 * 1000)
+            );
+
+          alert(
+            "Daily reward already claimed.\n" +
+            "Come back in " +
+            hours +
+            " hour(s)."
+          );
+
+          return;
+        }
+
+        balance += 100;
+
+        lastDailyReward =
+          now;
+
+        saveData();
+        updateUI();
 
         alert(
-          "Daily reward already claimed.\nCome back in " +
-          hours +
-          " hour(s)."
+          "🎁 +100 coins added!"
         );
-
-        return;
       }
+    );
 
-      balance += 100;
-      lastDailyReward = now;
+    upgradeButton.addEventListener(
+      "click",
+      function () {
 
-      saveData();
-      updateUI();
+        const upgradeCost =
+          level * 100;
 
-      alert("🎁 +100 coins added!");
-    });
+        if (
+          balance <
+          upgradeCost
+        ) {
 
-    upgradeButton.addEventListener("click", function () {
+          alert(
+            "You need " +
+            upgradeCost.toLocaleString(
+              "en-US"
+            ) +
+            " coins to upgrade."
+          );
 
-      const upgradeCost = level * 100;
+          return;
+        }
 
-      if (balance < upgradeCost) {
+        balance -=
+          upgradeCost;
+
+        level += 1;
+        tapPower += 1;
+
+        saveData();
+        updateUI();
 
         alert(
-          "You need " +
-          upgradeCost.toLocaleString("en-US") +
-          " coins to upgrade."
+          "⚡ Upgrade successful!\n" +
+          "Level " +
+          level +
+          "\nTap Power +" +
+          tapPower
         );
-
-        return;
       }
-
-      balance -= upgradeCost;
-      level += 1;
-      tapPower += 1;
-
-      saveData();
-      updateUI();
-
-      alert(
-        "⚡ Upgrade successful!\n" +
-        "Level " +
-        level +
-        "\nTap Power +" +
-        tapPower
-      );
-    });
+    );
 
     function createReferralLink() {
 
-      let userId = "demo";
+      let userId =
+        "demo";
 
       if (
         tg &&
         tg.initDataUnsafe &&
         tg.initDataUnsafe.user
       ) {
-        userId = tg.initDataUnsafe.user.id;
+
+        userId =
+          tg.initDataUnsafe.user.id;
       }
 
-      const botUsername = "QIVO_BOT";
+      const botUsername =
+        "QIVO_BOT";
 
       const link =
         "https://t.me/" +
@@ -610,33 +828,46 @@
         "?start=ref_" +
         userId;
 
-      referralLinkElement.textContent = link;
+      referralLinkElement.textContent =
+        link;
     }
 
-    copyReferralButton.addEventListener("click", async function () {
+    copyReferralButton.addEventListener(
+      "click",
+      async function () {
 
-      const link =
-        referralLinkElement.textContent;
+        const link =
+          referralLinkElement.textContent;
 
-      try {
+        try {
 
-        await navigator.clipboard.writeText(link);
+          await navigator.clipboard.writeText(
+            link
+          );
 
-        copyReferralButton.textContent = "Copied!";
-
-        setTimeout(function () {
           copyReferralButton.textContent =
-            "Copy Referral Link";
-        }, 1500);
+            "Copied!";
 
-      } catch (error) {
+          setTimeout(
+            function () {
 
-        alert(
-          "Copy failed. Please copy the link manually."
-        );
+              copyReferralButton.textContent =
+                "Copy Referral Link";
+
+            },
+            1500
+          );
+
+        } catch (error) {
+
+          alert(
+            "Copy failed. Please copy the link manually."
+          );
+        }
       }
-    });
+    );
 
+    loadTelegramUser();
     createReferralLink();
     updateUI();
   </script>
