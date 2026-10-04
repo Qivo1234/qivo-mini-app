@@ -1,684 +1,149 @@
 ```html
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
   <title>QIVO</title>
-
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   <style>
     * {
       box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
+      margin: 0;
+      padding: 0;
     }
 
     html,
     body {
-      margin: 0;
-      padding: 0;
-      min-height: 100%;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #0b1020;
+      font-family: Arial, sans-serif;
     }
 
     body {
-      min-height: 100vh;
-      font-family: Arial, sans-serif;
-      color: #ffffff;
-      background:
-        radial-gradient(
-          circle at 50% -10%,
-          #334155 0%,
-          #172033 32%,
-          #0b101a 65%,
-          #030508 100%
-        );
       display: flex;
       justify-content: center;
-      overflow-x: hidden;
+      align-items: center;
     }
 
     .app {
       width: 100%;
-      max-width: 480px;
+      height: 100%;
       min-height: 100vh;
-      padding: 22px 18px 35px;
-      text-align: center;
-    }
-
-    /* =========================
-       QIVO LOGO
-       ========================= */
-
-    .logo {
-      width: 92px;
-      height: 92px;
-      margin: 4px auto 12px;
-
-      border-radius: 50%;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      background:
-        radial-gradient(
-          circle at 35% 25%,
-          #fff4b0 0%,
-          #facc15 28%,
-          #b45309 70%,
-          #451a03 100%
-        );
-
-      border: 3px solid #fbbf24;
-
-      box-shadow:
-        0 0 18px rgba(245, 158, 11, 0.55),
-        0 0 40px rgba(245, 158, 11, 0.18),
-        inset 0 5px 10px rgba(255, 255, 255, 0.3),
-        inset 0 -8px 14px rgba(0, 0, 0, 0.3);
-    }
-
-    .logo-q {
-      font-size: 56px;
-      font-weight: 900;
-      color: #fff7c2;
-      line-height: 1;
-
-      text-shadow:
-        0 2px 3px rgba(0, 0, 0, 0.35),
-        0 0 12px rgba(255, 255, 255, 0.45);
-    }
-
-    /* =========================
-       TITLE
-       ========================= */
-
-    .title {
-      font-size: 30px;
-      font-weight: 900;
-      letter-spacing: 5px;
-
-      color: #fbbf24;
-
-      text-shadow:
-        0 0 10px rgba(245, 158, 11, 0.45),
-        0 0 25px rgba(245, 158, 11, 0.15);
-    }
-
-    .subtitle {
-      margin-top: 6px;
-
-      color: #94a3b8;
-      font-size: 13px;
-      letter-spacing: 1px;
-    }
-
-    /* =========================
-       USER
-       ========================= */
-
-    .user {
-      margin-top: 25px;
-
-      color: #cbd5e1;
-      font-size: 15px;
-    }
-
-    /* =========================
-       BALANCE
-       ========================= */
-
-    .balance {
-      margin-top: 30px;
-    }
-
-    .balance-label {
-      color: #94a3b8;
-      font-size: 14px;
-    }
-
-    .coins {
-      margin-top: 7px;
-
-      font-size: 43px;
-      font-weight: 900;
-
-      color: #ffffff;
-
-      text-shadow:
-        0 0 18px rgba(255, 255, 255, 0.12);
-    }
-
-    /* =========================
-       TAP BUTTON
-       ========================= */
-
-    .tap-button {
-      position: relative;
-
-      width: 225px;
-      height: 225px;
-
-      margin-top: 38px;
-
-      border-radius: 50%;
-
-      border: 8px solid rgba(255, 255, 255, 0.12);
-
-      background:
-        radial-gradient(
-          circle at 35% 25%,
-          #fff4b0 0%,
-          #fbbf24 25%,
-          #f59e0b 55%,
-          #92400e 100%
-        );
-
-      cursor: pointer;
-
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      position: relative;
+      color: white;
+    }
 
+    .title {
+      position: absolute;
+      top: 28px;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .balance {
+      position: absolute;
+      top: 70px;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      font-size: 18px;
+      opacity: 0.9;
+    }
+
+    .tap-container {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .tap-button {
+      width: 190px;
+      height: 190px;
+      border-radius: 50%;
+      border: none;
+      outline: none;
+      background: linear-gradient(145deg, #6d5dfc, #4738d8);
+      color: white;
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      cursor: pointer;
       box-shadow:
-        0 18px 45px rgba(0, 0, 0, 0.5),
-        0 0 35px rgba(245, 158, 11, 0.35),
-        inset 0 5px 12px rgba(255, 255, 255, 0.4),
-        inset 0 -10px 18px rgba(0, 0, 0, 0.2);
-
-      transition:
-        transform 0.08s ease,
-        box-shadow 0.08s ease;
+        0 15px 35px rgba(0, 0, 0, 0.35),
+        inset 0 3px 8px rgba(255, 255, 255, 0.25);
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      transition: transform 0.08s ease;
     }
 
     .tap-button:active {
-      transform: scale(0.93);
-
-      box-shadow:
-        0 8px 25px rgba(0, 0, 0, 0.45),
-        0 0 25px rgba(245, 158, 11, 0.25),
-        inset 0 4px 10px rgba(0, 0, 0, 0.2);
+      transform: scale(0.94);
     }
-
-    /* =========================
-       QIVO COIN
-       ========================= */
-
-    .qivo-coin {
-      width: 112px;
-      height: 112px;
-
-      border-radius: 50%;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      background:
-        radial-gradient(
-          circle at 35% 30%,
-          #fff7c2 0%,
-          #facc15 35%,
-          #d97706 75%,
-          #78350f 100%
-        );
-
-      border: 5px solid rgba(255, 255, 255, 0.35);
-
-      box-shadow:
-        0 8px 20px rgba(0, 0, 0, 0.35),
-        inset 0 4px 8px rgba(255, 255, 255, 0.45),
-        inset 0 -7px 12px rgba(0, 0, 0, 0.25);
-
-      position: relative;
-    }
-
-    .qivo-q {
-      font-family: Arial, sans-serif;
-
-      font-size: 67px;
-      font-weight: 900;
-
-      color: #fff7c2;
-
-      line-height: 1;
-
-      text-shadow:
-        0 2px 3px rgba(0, 0, 0, 0.35),
-        0 0 12px rgba(255, 255, 255, 0.5);
-    }
-
-    /* =========================
-       TAP TEXT
-       ========================= */
-
-    .tap-text {
-      margin-top: 8px;
-
-      font-family: Arial, sans-serif;
-
-      font-size: 25px;
-      font-weight: 900;
-
-      letter-spacing: 4px;
-
-      color: #3b2200;
-
-      text-shadow:
-        0 1px 1px rgba(255, 255, 255, 0.25);
-    }
-
-    /* =========================
-       HINT
-       ========================= */
 
     .hint {
-      margin-top: 25px;
-
-      color: #64748b;
-      font-size: 13px;
+      position: absolute;
+      bottom: 35px;
+      width: 100%;
+      text-align: center;
+      font-size: 14px;
+      opacity: 0.65;
     }
 
-    /* =========================
-       STATS
-       ========================= */
-
-    .stats {
-      display: flex;
-      gap: 10px;
-
-      margin-top: 30px;
-    }
-
-    .stat {
-      flex: 1;
-
-      padding: 13px 8px;
-
-      border-radius: 14px;
-
-      background: rgba(255, 255, 255, 0.055);
-
-      border: 1px solid rgba(255, 255, 255, 0.06);
-
-      backdrop-filter: blur(8px);
-    }
-
-    .stat-title {
-      color: #64748b;
-      font-size: 11px;
-    }
-
-    .stat-value {
-      margin-top: 5px;
-
-      color: #e2e8f0;
-
-      font-size: 16px;
-      font-weight: bold;
-    }
-
-    /* =========================
-       +1 ANIMATION
-       ========================= */
-
-    .plus-one {
-      position: fixed;
-
-      pointer-events: none;
-
-      color: #fbbf24;
-
-      font-size: 25px;
-      font-weight: bold;
-
-      animation:
-        floatUp 0.8s ease-out forwards;
-
-      z-index: 9999;
-
-      text-shadow:
-        0 0 10px rgba(245, 158, 11, 0.5);
-    }
-
-    @keyframes floatUp {
-
-      0% {
-        opacity: 1;
-        transform:
-          translateY(0)
-          scale(1);
-      }
-
-      100% {
-        opacity: 0;
-
-        transform:
-          translateY(-90px)
-          scale(1.3);
-      }
-    }
-
-    /* =========================
-       MOBILE
-       ========================= */
-
-    @media (max-width: 380px) {
-
+    @media (max-width: 400px) {
       .tap-button {
-        width: 200px;
-        height: 200px;
-      }
-
-      .qivo-coin {
-        width: 100px;
-        height: 100px;
-      }
-
-      .qivo-q {
-        font-size: 60px;
-      }
-
-      .coins {
-        font-size: 38px;
+        width: 170px;
+        height: 170px;
+        font-size: 27px;
       }
     }
-
   </style>
 </head>
 
 <body>
 
-  <div class="app">
+  <main class="app">
 
-    <!-- QIVO Logo -->
-
-    <div class="logo">
-      <div class="logo-q">Q</div>
-    </div>
-
-    <!-- Title -->
-
-    <div class="title">
-      QIVO
-    </div>
-
-    <div class="subtitle">
-      Tap • Earn • Grow
-    </div>
-
-    <!-- User -->
-
-    <div class="user" id="username">
-      در حال ورود...
-    </div>
-
-    <!-- Balance -->
+    <div class="title">QIVO</div>
 
     <div class="balance">
-
-      <div class="balance-label">
-        موجودی QIVO
-      </div>
-
-      <div class="coins" id="coins">
-        0
-      </div>
-
+      Balance: <span id="balance">0</span>
     </div>
 
-    <!-- TAP BUTTON -->
-
-    <button
-      class="tap-button"
-      id="tapButton"
-      type="button"
-    >
-
-      <div class="qivo-coin">
-
-        <div class="qivo-q">
-          Q
-        </div>
-
-      </div>
-
-      <span class="tap-text">
+    <div class="tap-container">
+      <button class="tap-button" id="tapButton">
         TAP
-      </span>
-
-    </button>
+      </button>
+    </div>
 
     <div class="hint">
-      برای دریافت QIVO روی سکه بزن
+      Tap the button to collect coins
     </div>
 
-    <!-- STATS -->
-
-    <div class="stats">
-
-      <div class="stat">
-
-        <div class="stat-title">
-          هر Tap
-        </div>
-
-        <div class="stat-value">
-          +1
-        </div>
-
-      </div>
-
-      <div class="stat">
-
-        <div class="stat-title">
-          Level
-        </div>
-
-        <div class="stat-value">
-          1
-        </div>
-
-      </div>
-
-      <div class="stat">
-
-        <div class="stat-title">
-          انرژی
-        </div>
-
-        <div class="stat-value">
-          ∞
-        </div>
-
-      </div>
-
-    </div>
-
-  </div>
-
+  </main>
 
   <script>
-
-    /* =========================
-       TELEGRAM
-       ========================= */
-
-    const tg =
-      window.Telegram.WebApp;
-
-    tg.ready();
-
-    tg.expand();
-
-
-    /* =========================
-       ELEMENTS
-       ========================= */
-
-    const usernameElement =
-      document.getElementById(
-        "username"
-      );
-
-    const coinsElement =
-      document.getElementById(
-        "coins"
-      );
-
-    const tapButton =
-      document.getElementById(
-        "tapButton"
-      );
-
-
-    /* =========================
-       LOCAL BALANCE
-       ========================= */
-
-    let coins = 0;
-
-
-    /* =========================
-       TELEGRAM USER
-       ========================= */
-
-    if (
-      tg.initDataUnsafe &&
-      tg.initDataUnsafe.user
-    ) {
-
-      const user =
-        tg.initDataUnsafe.user;
-
-      if (user.username) {
-
-        usernameElement.textContent =
-          "@" + user.username;
-
-      } else {
-
-        usernameElement.textContent =
-          user.first_name ||
-          "کاربر";
-
-      }
-
-    } else {
-
-      usernameElement.textContent =
-        "کاربر تست";
-
-    }
-
-
-    /* =========================
-       UPDATE COINS
-       ========================= */
-
-    function updateCoins() {
-
-      coinsElement.textContent =
-        coins.toLocaleString(
-          "en-US"
-        );
-
-    }
-
-
-    /* =========================
-       +1 ANIMATION
-       ========================= */
-
-    function createPlusOne(event) {
-
-      const element =
-        document.createElement(
-          "div"
-        );
-
-      element.className =
-        "plus-one";
-
-      element.textContent =
-        "+1";
-
-
-      let x;
-      let y;
-
-
-      if (
-        event.touches &&
-        event.touches.length > 0
-      ) {
-
-        x =
-          event.touches[0].clientX;
-
-        y =
-          event.touches[0].clientY;
-
-      } else {
-
-        x =
-          event.clientX;
-
-        y =
-          event.clientY;
-
-      }
-
-
-      element.style.left =
-        x + "px";
-
-      element.style.top =
-        y + "px";
-
-
-      document.body.appendChild(
-        element
-      );
-
-
-      setTimeout(
-        () => {
-          element.remove();
-        },
-        800
-      );
-
-    }
-
-
-    /* =========================
-       TAP
-       ========================= */
-
-    tapButton.addEventListener(
-      "click",
-      function(event) {
-
-        coins += 1;
-
-        updateCoins();
-
-        createPlusOne(event);
-
-      }
-    );
-
-
-    /* =========================
-       INITIAL
-       ========================= */
-
-    updateCoins();
-
+    let balance = 0;
+
+    const balanceElement = document.getElementById("balance");
+    const tapButton = document.getElementById("tapButton");
+
+    tapButton.addEventListener("click", () => {
+      balance++;
+      balanceElement.textContent = balance;
+    });
   </script>
 
 </body>
