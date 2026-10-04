@@ -980,6 +980,7 @@
   const MAX_ENERGY = 1000;
   const ENERGY_PER_TAP = 1;
   const ENERGY_RECHARGE_TIME = 3000;
+  const ENERGY_SYNC_INTERVAL = 15000;
 
   const DAILY_REWARDS = [
     100,
@@ -1001,6 +1002,7 @@
   let taskCompleted = false;
 
   let backendReady = false;
+  let syncInProgress = false;
 
   const balanceElement =
     document.getElementById("balance");
@@ -1242,6 +1244,91 @@
     }
   }
 
+  /* SECURE STATE SYNC */
+
+  async function syncQIVOState() {
+
+    if (!backendReady) {
+      return;
+    }
+
+    if (syncInProgress) {
+      return;
+    }
+
+    syncInProgress = true;
+
+    try {
+
+      const data =
+        await callAPI("sync");
+
+      if (
+        !data ||
+        data.success !== true
+      ) {
+        throw new Error(
+          data?.error ||
+          "State sync failed"
+        );
+      }
+
+      if (
+        data.balance !== undefined
+      ) {
+        balance =
+          Number(data.balance) || 0;
+      }
+
+      if (
+        data.energy !== undefined
+      ) {
+        energy =
+          Number(data.energy);
+
+        if (isNaN(energy)) {
+          energy = 0;
+        }
+
+        if (energy < 0) {
+          energy = 0;
+        }
+
+        if (energy > MAX_ENERGY) {
+          energy = MAX_ENERGY;
+        }
+      }
+
+      if (
+        data.level !== undefined
+      ) {
+        level =
+          Number(data.level) || 1;
+      }
+
+      if (
+        data.tap_power !== undefined
+      ) {
+        tapPower =
+          Number(data.tap_power) || 1;
+      }
+
+      updateUI();
+
+    } catch (error) {
+
+      console.error(
+        "QIVO state sync error:",
+        error
+      );
+
+    } finally {
+
+      syncInProgress = false;
+
+    }
+  }
+
   /* TAP */
 
   let tapQueue = Promise.resolve();
@@ -1301,6 +1388,14 @@
                 error
               );
 
+              /*
+               * If the server says there is
+               * no energy, immediately sync
+               * the real server state.
+               */
+
+              await syncQIVOState();
+
             }
 
           }
@@ -1309,7 +1404,16 @@
     }
   );
 
-  /* ENERGY */
+  /* ENERGY DISPLAY */
+
+  /*
+   * This local timer is only a visual
+   * countdown/recharge display.
+   *
+   * The server remains authoritative.
+   * Every TAP is checked by qivo_tap.
+   * State is also synchronized periodically.
+   */
 
   setInterval(
     function () {
@@ -1320,7 +1424,7 @@
 
       if (energy < MAX_ENERGY) {
 
-        energy += 1;
+        energy += ENERGY_PER_TAP;
 
         if (energy > MAX_ENERGY) {
           energy = MAX_ENERGY;
@@ -1333,6 +1437,49 @@
     },
     ENERGY_RECHARGE_TIME
   );
+
+  /*
+   * Server state synchronization every 15 seconds.
+   */
+
+  setInterval(
+    function () {
+
+      syncQIVOState();
+
+    },
+    ENERGY_SYNC_INTERVAL
+  );
+
+  /*
+   * Sync immediately when the user
+   * returns to the Mini App.
+   */
+
+  document.addEventListener(
+    "visibilitychange",
+    function () {
+
+      if (
+        document.visibilityState ===
+        "visible"
+      ) {
+        syncQIVOState();
+      }
+
+    }
+  );
+
+  if (tg) {
+
+    tg.onEvent(
+      "viewportChanged",
+      function () {
+        syncQIVOState();
+      }
+    );
+
+  }
 
   /* DAILY */
 
