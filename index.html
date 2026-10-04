@@ -1070,27 +1070,86 @@
   /* QIVO API */
 
   async function callAPI(action) {
-alert("initData length: " + (tg.initData ? tg.initData.length : 0));
-    if (!tg || !tg.initData) {
-      throw new Error("Telegram session not available");
+
+    if (!tg) {
+      throw new Error(
+        "Telegram WebApp is not available"
+      );
     }
 
-    const response = await fetch(API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        action: action,
-        initData: tg.initData
-      })
-    });
-
-    const data = await response.json();
-
-    if (!response.ok || !data.success) {
+    if (!tg.initData) {
       throw new Error(
-        data.error || "API request failed"
+        "Telegram initData is empty"
+      );
+    }
+
+    let response;
+
+    try {
+
+      response = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          action: action,
+          initData: tg.initData
+        })
+      });
+
+    } catch (networkError) {
+
+      throw new Error(
+        "Network error while connecting to QIVO API: " +
+        (
+          networkError instanceof Error
+            ? networkError.message
+            : String(networkError)
+        )
+      );
+    }
+
+    const responseText =
+      await response.text();
+
+    let data = null;
+
+    try {
+
+      data =
+        JSON.parse(responseText);
+
+    } catch {
+
+      throw new Error(
+        "QIVO API returned non-JSON response.\n\n" +
+        "HTTP Status: " +
+        response.status +
+        "\n\n" +
+        responseText
+      );
+    }
+
+    if (!response.ok) {
+
+      throw new Error(
+        "QIVO API HTTP " +
+        response.status +
+        "\n\n" +
+        (
+          data.error ||
+          responseText ||
+          "Unknown server error"
+        )
+      );
+    }
+
+    if (!data.success) {
+
+      throw new Error(
+        data.error ||
+        "QIVO API returned success=false"
       );
     }
 
@@ -1174,7 +1233,11 @@ alert("initData length: " + (tg.initData ? tg.initData.length : 0));
 
       alert(
         "QIVO backend connection failed.\n\n" +
-        error.message
+        (
+          error instanceof Error
+            ? error.message
+            : String(error)
+        )
       );
     }
   }
@@ -1191,11 +1254,6 @@ alert("initData length: " + (tg.initData ? tg.initData.length : 0));
         );
         return;
       }
-
-      /*
-       * Tap reward will be moved to the
-       * secure backend in the next step.
-       */
 
       if (energy < ENERGY_PER_TAP) {
         return;
