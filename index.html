@@ -874,7 +874,7 @@
       <div class="menu-icon">👥</div>
       <div>
         <div class="menu-title">Referral</div>
-        <div class="menu-small">+100 per referral</div>
+        <div class="menu-small">+2000 per referral</div>
       </div>
     </button>
 
@@ -981,7 +981,7 @@
     </div>
 
     <div class="panel-text" style="margin-bottom:12px;">
-      Invite friends and earn 100 QIVO points for every successful referral.
+      Invite friends and earn 2000 QIVO points for every successful referral.
     </div>
 
     <div id="referralLink" class="referral-link">
@@ -1092,7 +1092,7 @@
       Tap the QIVO button to earn points.<br><br>
       Use your points to upgrade your Tap Power.<br><br>
       Claim your Daily Reward every 24 hours.<br><br>
-      Invite friends and earn 100 points for each successful referral.<br><br>
+      Invite friends and earn 2000 points for each successful referral.<br><br>
       Your account data is connected to the QIVO backend.
     </div>
 
@@ -1329,7 +1329,7 @@
 
     referralEarnedElement.textContent =
       (
-        referralCount * 100
+        referralCount * 2000
       ).toLocaleString("en-US");
 
     quotaValue.textContent =
@@ -1462,7 +1462,10 @@
 
   /* QIVO API */
 
-  async function callAPI(action) {
+  async function callAPI(
+    action,
+    referralCode = null
+  ) {
 
     if (!tg) {
       throw new Error(
@@ -1476,6 +1479,16 @@
       );
     }
 
+    const requestBody = {
+      action: action,
+      initData: tg.initData
+    };
+
+    if (referralCode) {
+      requestBody.referralCode =
+        referralCode;
+    }
+
     let response;
 
     try {
@@ -1485,10 +1498,9 @@
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-          action: action,
-          initData: tg.initData
-        })
+        body: JSON.stringify(
+          requestBody
+        )
       });
 
     } catch (networkError) {
@@ -1702,8 +1714,32 @@
         );
       }
 
+      let referralCode = null;
+
+      if (
+        tg.initDataUnsafe &&
+        tg.initDataUnsafe.start_param
+      ) {
+
+        const startParam =
+          tg.initDataUnsafe.start_param;
+
+        if (
+          startParam.startsWith("ref_")
+        ) {
+
+          referralCode =
+            startParam;
+
+        }
+
+      }
+
       const data =
-        await callAPI("init");
+        await callAPI(
+          "init",
+          referralCode
+        );
 
       if (!data.user) {
         throw new Error(
