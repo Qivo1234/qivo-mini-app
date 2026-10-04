@@ -1030,7 +1030,6 @@
 
   const MAX_ENERGY = 1000;
   const ENERGY_PER_TAP = 1;
-  const ENERGY_RECHARGE_TIME = 3000;
 
   const MAX_TAP_QUOTA = 1000;
   const QUOTA_RESET_SECONDS = 8 * 60 * 60;
@@ -1440,15 +1439,12 @@
       }
 
       if (tapQuota <= 0) {
-
         return;
       }
 
       if (energy <= 0) {
-
         return;
       }
-
 
       /*
        * Instant visual response.
@@ -1467,7 +1463,6 @@
       }
 
       updateUI();
-
 
       /*
        * Send the real TAP to the server
@@ -1541,11 +1536,6 @@
 
             } else {
 
-              /*
-               * Server rejected this TAP.
-               * Restore authoritative state.
-               */
-
               refreshServerState();
 
             }
@@ -1559,11 +1549,6 @@
               "QIVO tap error:",
               error
             );
-
-            /*
-             * If connection failed,
-             * restore server state.
-             */
 
             refreshServerState();
 
@@ -1587,30 +1572,16 @@
   );
 
 
-  /* ENERGY RECHARGE */
-
-  setInterval(
-    function () {
-
-      if (!backendReady) {
-        return;
-      }
-
-      if (energy < MAX_ENERGY) {
-
-        energy += ENERGY_PER_TAP;
-
-        if (energy > MAX_ENERGY) {
-          energy = MAX_ENERGY;
-        }
-
-        updateUI();
-
-      }
-
-    },
-    ENERGY_RECHARGE_TIME
-  );
+  /*
+   * IMPORTANT:
+   *
+   * There is NO automatic Energy recharge here.
+   *
+   * Energy only decreases when the user taps.
+   *
+   * The 8-hour TAP QUOTA timer below remains
+   * completely unchanged.
+   */
 
 
   /* QUOTA COUNTDOWN */
