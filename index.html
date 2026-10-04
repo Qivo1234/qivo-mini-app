@@ -236,42 +236,9 @@
       font-weight: 800;
     }
 
-    .energy-section {
-      width: 100%;
-      margin-top: 15px;
-      padding: 15px;
-      border-radius: 17px;
-      background: rgba(255,255,255,0.045);
-      border: 1px solid rgba(255,255,255,0.07);
-    }
-
-    .energy-top {
-      display: flex;
-      justify-content: space-between;
-      font-size: 11px;
-      opacity: .65;
-      margin-bottom: 8px;
-    }
-
-    .energy-bar {
-      width: 100%;
-      height: 8px;
-      background: rgba(255,255,255,.09);
-      border-radius: 20px;
-      overflow: hidden;
-    }
-
-    .energy-fill {
-      height: 100%;
-      width: 100%;
-      background: linear-gradient(90deg,#7567ff,#aaa2ff);
-      border-radius: 20px;
-      transition: width .08s ease;
-    }
-
     .quota-section {
       width: 100%;
-      margin-top: 10px;
+      margin-top: 15px;
       padding: 14px 15px;
       border-radius: 17px;
       background: rgba(117,103,255,.075);
@@ -433,6 +400,17 @@
       color: white;
       font-weight: 800;
       cursor: pointer;
+    }
+
+    .daily-reward-button:disabled {
+      cursor: not-allowed;
+    }
+
+    .daily-status {
+      margin-top: 10px;
+      text-align: center;
+      font-size: 10px;
+      opacity: .5;
     }
 
     .task-item {
@@ -701,19 +679,6 @@
 
   </section>
 
-  <section class="energy-section">
-
-    <div class="energy-top">
-      <span>⚡ Energy</span>
-      <span id="energyText">1000 / 1000</span>
-    </div>
-
-    <div class="energy-bar">
-      <div id="energyFill" class="energy-fill"></div>
-    </div>
-
-  </section>
-
   <section class="quota-section">
 
     <div class="quota-title">
@@ -819,6 +784,10 @@
     <button id="dailyButton" class="daily-reward-button" type="button">
       Claim Today's Reward
     </button>
+
+    <div id="dailyStatus" class="daily-status">
+      Daily reward is ready.
+    </div>
 
   </section>
 
@@ -955,9 +924,9 @@
     <div class="panel-text">
       Tap the QIVO button to earn points.<br><br>
       Use your points to upgrade your Tap Power.<br><br>
-      Claim your Daily Reward every day for seven days.<br><br>
+      Claim your Daily Reward every 24 hours.<br><br>
       Invite friends and earn 100 points for each successful referral.<br><br>
-      Your account data is now connected to the QIVO backend.
+      Your account data is connected to the QIVO backend.
     </div>
 
   </section>
@@ -1032,7 +1001,6 @@
   const ENERGY_PER_TAP = 1;
 
   const MAX_TAP_QUOTA = 1000;
-  const QUOTA_RESET_SECONDS = 8 * 60 * 60;
 
   const DAILY_REWARDS = [
     100,
@@ -1049,8 +1017,10 @@
   let level = 1;
   let tapPower = 1;
   let referralCount = 0;
-  let dailyDay = 0;
+
+  let dailyDay = 1;
   let lastDailyReward = 0;
+
   let taskCompleted = false;
 
   let tapQuota = MAX_TAP_QUOTA;
@@ -1059,15 +1029,11 @@
   let backendReady = false;
   let activeTapRequests = 0;
   let refreshInProgress = false;
+  let dailyClaimInProgress = false;
+
 
   const balanceElement =
     document.getElementById("balance");
-
-  const energyText =
-    document.getElementById("energyText");
-
-  const energyFill =
-    document.getElementById("energyFill");
 
   const levelElement =
     document.getElementById("level");
@@ -1086,6 +1052,9 @@
 
   const dailyButton =
     document.getElementById("dailyButton");
+
+  const dailyStatus =
+    document.getElementById("dailyStatus");
 
   const upgradeButton =
     document.getElementById("upgradeButton");
@@ -1107,18 +1076,6 @@
 
     balanceElement.textContent =
       balance.toLocaleString("en-US");
-
-    energyText.textContent =
-      energy + " / " + MAX_ENERGY;
-
-    energyFill.style.width =
-      Math.max(
-        0,
-        Math.min(
-          100,
-          energy / MAX_ENERGY * 100
-        )
-      ) + "%";
 
     levelElement.textContent =
       level;
@@ -1328,8 +1285,11 @@
     dailyDay =
       Number(user.daily_day) || 1;
 
-    if (dailyDay > 7) {
-      dailyDay = 7;
+    if (
+      dailyDay < 1 ||
+      dailyDay > 7
+    ) {
+      dailyDay = 1;
     }
 
     if (user.daily_claimed_at) {
@@ -1339,6 +1299,10 @@
           user.daily_claimed_at
         ).getTime();
 
+    } else {
+
+      lastDailyReward = 0;
+
     }
 
     taskCompleted =
@@ -1347,9 +1311,7 @@
     tapQuota =
       Number(user.tap_quota);
 
-    if (
-      isNaN(tapQuota)
-    ) {
+    if (isNaN(tapQuota)) {
       tapQuota =
         MAX_TAP_QUOTA;
     }
@@ -1446,10 +1408,6 @@
         return;
       }
 
-      /*
-       * Instant visual response.
-       */
-
       balance += tapPower;
       energy -= ENERGY_PER_TAP;
       tapQuota -= 1;
@@ -1463,11 +1421,6 @@
       }
 
       updateUI();
-
-      /*
-       * Send the real TAP to the server
-       * without waiting for the UI.
-       */
 
       activeTapRequests++;
 
@@ -1572,18 +1525,6 @@
   );
 
 
-  /*
-   * IMPORTANT:
-   *
-   * There is NO automatic Energy recharge here.
-   *
-   * Energy only decreases when the user taps.
-   *
-   * The 8-hour TAP QUOTA timer below remains
-   * completely unchanged.
-   */
-
-
   /* QUOTA COUNTDOWN */
 
   function updateQuotaTimer() {
@@ -1607,11 +1548,6 @@
 
       quotaTimer.textContent =
         "Recharge ready";
-
-      /*
-       * Ask the server for the
-       * new 1000 TAP quota.
-       */
 
       if (
         backendReady &&
@@ -1659,7 +1595,7 @@
   );
 
 
-  /* DAILY */
+  /* DAILY REWARD */
 
   function updateDailyUI() {
 
@@ -1675,48 +1611,229 @@
       day.classList.remove("active");
 
       if (
-        i === dailyDay + 1 &&
-        dailyDay < 7
+        i === dailyDay
       ) {
+
         day.classList.add("active");
+
       }
+
     }
 
-    if (dailyDay >= 7) {
+    const now =
+      Date.now();
 
-      dailyButton.textContent =
-        "7-Day Reward Complete";
+    const twentyFourHours =
+      24 * 60 * 60 * 1000;
 
-      dailyButton.disabled = true;
-      dailyButton.style.opacity = "0.5";
+    const canClaim =
+      !lastDailyReward ||
+      now >=
+      lastDailyReward +
+      twentyFourHours;
 
-    } else {
+    const reward =
+      DAILY_REWARDS[
+        Math.max(
+          0,
+          Math.min(
+            6,
+            dailyDay - 1
+          )
+        )
+      ];
 
-      const reward =
-        DAILY_REWARDS[
-          Math.max(0, dailyDay)
-        ];
+    if (canClaim) {
+
+      dailyButton.disabled = false;
+      dailyButton.style.opacity = "1";
 
       dailyButton.textContent =
         "Claim +" +
         reward +
         " Points";
 
-      dailyButton.disabled = false;
-      dailyButton.style.opacity = "1";
+      dailyStatus.textContent =
+        "Your daily reward is ready.";
+
+    } else {
+
+      dailyButton.disabled = true;
+      dailyButton.style.opacity = "0.5";
+
+      const remaining =
+        Math.max(
+          0,
+          (
+            lastDailyReward +
+            twentyFourHours
+          ) -
+          now
+        );
+
+      const totalSeconds =
+        Math.floor(
+          remaining / 1000
+        );
+
+      const hours =
+        Math.floor(
+          totalSeconds / 3600
+        );
+
+      const minutes =
+        Math.floor(
+          (totalSeconds % 3600) / 60
+        );
+
+      const seconds =
+        totalSeconds % 60;
+
+      dailyButton.textContent =
+        "Reward Claimed";
+
+      dailyStatus.textContent =
+        "Next reward in " +
+        String(hours).padStart(2, "0") +
+        ":" +
+        String(minutes).padStart(2, "0") +
+        ":" +
+        String(seconds).padStart(2, "0");
     }
   }
 
 
   dailyButton.addEventListener(
     "click",
-    function () {
+    async function () {
 
-      alert(
-        "Daily Reward will be connected to the secure backend next."
-      );
+      if (
+        !backendReady ||
+        dailyClaimInProgress
+      ) {
+        return;
+      }
+
+      dailyClaimInProgress = true;
+
+      dailyButton.disabled = true;
+      dailyButton.style.opacity = "0.5";
+      dailyButton.textContent =
+        "Claiming...";
+
+      try {
+
+        const data =
+          await callAPI(
+            "daily_reward"
+          );
+
+        if (
+          data &&
+          data.success === true
+        ) {
+
+          if (
+            data.balance !== undefined
+          ) {
+
+            balance =
+              Number(data.balance) || 0;
+
+          }
+
+          if (
+            data.daily_day !== undefined
+          ) {
+
+            dailyDay =
+              Number(data.daily_day) || 1;
+
+          }
+
+          if (
+            data.daily_claimed_at
+          ) {
+
+            lastDailyReward =
+              new Date(
+                data.daily_claimed_at
+              ).getTime();
+
+          }
+
+          updateUI();
+
+          dailyStatus.textContent =
+            "+" +
+            Number(
+              data.reward || 0
+            ).toLocaleString("en-US") +
+            " QIVO points added!";
+
+        } else {
+
+          if (
+            data &&
+            data.error ===
+            "Daily reward is not ready"
+          ) {
+
+            dailyStatus.textContent =
+              "Daily reward is not ready yet.";
+
+          } else {
+
+            dailyStatus.textContent =
+              (
+                data?.error ||
+                "Unable to claim daily reward."
+              );
+
+          }
+
+          await refreshServerState();
+
+        }
+
+      } catch (error) {
+
+        console.error(
+          "Daily reward error:",
+          error
+        );
+
+        dailyStatus.textContent =
+          "Unable to claim daily reward.";
+
+        await refreshServerState();
+
+      } finally {
+
+        dailyClaimInProgress = false;
+
+        updateDailyUI();
+
+      }
 
     }
+  );
+
+
+  setInterval(
+    function () {
+
+      if (
+        document.visibilityState ===
+        "visible"
+      ) {
+
+        updateDailyUI();
+
+      }
+
+    },
+    1000
   );
 
 
