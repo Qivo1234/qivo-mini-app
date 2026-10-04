@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
   <title>QIVO</title>
+
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   <style>
@@ -26,6 +28,10 @@
       font-family: Arial, Helvetica, sans-serif;
     }
 
+    button {
+      font-family: inherit;
+    }
+
     .app {
       width: 100%;
       height: 100dvh;
@@ -34,15 +40,14 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      overflow-y: auto;
+      padding-bottom: 30px;
     }
 
     .header {
-      position: absolute;
-      top: 24px;
-      left: 0;
       width: 100%;
       text-align: center;
+      padding-top: 28px;
     }
 
     .logo {
@@ -52,18 +57,16 @@
     }
 
     .subtitle {
-      margin-top: 5px;
+      margin-top: 6px;
       font-size: 13px;
       opacity: 0.55;
       letter-spacing: 1px;
     }
 
     .balance-box {
-      position: absolute;
-      top: 90px;
-      left: 0;
       width: 100%;
       text-align: center;
+      margin-top: 32px;
     }
 
     .balance-label {
@@ -75,7 +78,7 @@
 
     .balance {
       margin-top: 5px;
-      font-size: 30px;
+      font-size: 25px;
       font-weight: 700;
     }
 
@@ -84,11 +87,12 @@
       display: flex;
       justify-content: center;
       align-items: center;
+      margin-top: 28px;
     }
 
     .tap-button {
-      width: 185px;
-      height: 185px;
+      width: 190px;
+      height: 190px;
       border: none;
       border-radius: 50%;
       background: linear-gradient(145deg, #7567ff, #4b3bd4);
@@ -110,119 +114,192 @@
       transform: scale(0.93);
     }
 
-    .tap-button.disabled {
-      opacity: 0.45;
-      transform: scale(0.96);
-    }
-
     .stats {
-      position: absolute;
-      bottom: 112px;
-      width: min(330px, 86%);
+      width: 90%;
+      max-width: 390px;
+      margin-top: 28px;
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 10px;
     }
 
-    .stat {
-      background: rgba(255, 255, 255, 0.07);
+    .stat-box {
+      background: rgba(255, 255, 255, 0.06);
       border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 14px;
-      padding: 10px;
+      padding: 13px;
       text-align: center;
     }
 
-    .stat-title {
+    .stat-label {
       font-size: 11px;
-      opacity: 0.55;
+      opacity: 0.5;
       text-transform: uppercase;
+      letter-spacing: 0.7px;
     }
 
     .stat-value {
-      margin-top: 4px;
-      font-size: 17px;
+      margin-top: 5px;
+      font-size: 18px;
       font-weight: 700;
     }
 
-    .energy-box {
-      position: absolute;
-      bottom: 68px;
-      width: min(300px, 80%);
-      text-align: center;
+    .energy-section {
+      width: 90%;
+      max-width: 390px;
+      margin-top: 15px;
     }
 
-    .energy-info {
+    .energy-top {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 6px;
       font-size: 12px;
-    }
-
-    .energy-label {
       opacity: 0.65;
+      margin-bottom: 7px;
     }
 
     .energy-bar {
       width: 100%;
-      height: 8px;
-      background: rgba(255, 255, 255, 0.12);
-      border-radius: 20px;
+      height: 9px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
       overflow: hidden;
     }
 
     .energy-fill {
       height: 100%;
       width: 100%;
-      background: linear-gradient(90deg, #7567ff, #9a8fff);
-      border-radius: 20px;
+      background: linear-gradient(90deg, #7567ff, #9c92ff);
+      border-radius: 10px;
       transition: width 0.2s ease;
     }
 
     .actions {
-      position: absolute;
-      bottom: 15px;
-      display: flex;
-      gap: 8px;
+      width: 90%;
+      max-width: 390px;
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
     }
 
     .action-button {
       border: none;
-      border-radius: 10px;
-      padding: 9px 13px;
+      border-radius: 13px;
+      padding: 14px 10px;
+      color: white;
       background: rgba(255, 255, 255, 0.08);
-      color: #ffffff;
-      font-size: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 13px;
+      font-weight: 700;
       cursor: pointer;
     }
 
     .action-button:active {
-      transform: scale(0.96);
+      transform: scale(0.97);
+    }
+
+    .panel {
+      width: 90%;
+      max-width: 390px;
+      margin-top: 15px;
+      padding: 16px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .panel-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .referral-link {
+      width: 100%;
+      padding: 11px;
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.25);
+      color: rgba(255, 255, 255, 0.75);
+      font-size: 11px;
+      word-break: break-all;
+      margin-bottom: 10px;
+    }
+
+    .copy-button {
+      width: 100%;
+      border: none;
+      border-radius: 10px;
+      padding: 11px;
+      background: #7567ff;
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .referral-info {
+      margin-top: 10px;
+      text-align: center;
+      font-size: 12px;
+      opacity: 0.6;
+    }
+
+    .leaderboard-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 11px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      font-size: 13px;
+    }
+
+    .leaderboard-row:last-child {
+      border-bottom: none;
+    }
+
+    .rank {
+      width: 35px;
+      font-weight: 700;
+      opacity: 0.8;
+    }
+
+    .player {
+      flex: 1;
+    }
+
+    .score {
+      font-weight: 700;
+    }
+
+    .my-rank {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
     }
 
     .hint {
-      position: absolute;
-      bottom: 1px;
-      font-size: 10px;
-      opacity: 0.25;
+      margin-top: 22px;
+      font-size: 12px;
+      opacity: 0.4;
+      text-align: center;
     }
 
     @media (max-width: 400px) {
       .tap-button {
-        width: 165px;
-        height: 165px;
+        width: 170px;
+        height: 170px;
         font-size: 27px;
-      }
-
-      .stats {
-        bottom: 108px;
-      }
-
-      .energy-box {
-        bottom: 65px;
       }
 
       .logo {
         font-size: 24px;
+      }
+
+      .balance-box {
+        margin-top: 27px;
       }
     }
   </style>
@@ -239,9 +316,8 @@
 
     <section class="balance-box">
       <div class="balance-label">Balance</div>
-
       <div class="balance">
-        🪙 <span id="balance">0</span>
+        <span id="balance">0</span>
       </div>
     </section>
 
@@ -253,26 +329,23 @@
 
     <section class="stats">
 
-      <div class="stat">
-        <div class="stat-title">Level</div>
+      <div class="stat-box">
+        <div class="stat-label">Level</div>
         <div class="stat-value" id="level">1</div>
       </div>
 
-      <div class="stat">
-        <div class="stat-title">Tap Power</div>
+      <div class="stat-box">
+        <div class="stat-label">Tap Power</div>
         <div class="stat-value" id="tapPower">1</div>
       </div>
 
     </section>
 
-    <section class="energy-box">
+    <section class="energy-section">
 
-      <div class="energy-info">
-        <span class="energy-label">Energy</span>
-
-        <span>
-          <span id="energy">1000</span> / 1000
-        </span>
+      <div class="energy-top">
+        <span>Energy</span>
+        <span id="energyText">1000 / 1000</span>
       </div>
 
       <div class="energy-bar">
@@ -281,7 +354,7 @@
 
     </section>
 
-    <div class="actions">
+    <section class="actions">
 
       <button id="dailyButton" class="action-button" type="button">
         🎁 Daily Reward
@@ -291,10 +364,67 @@
         ⚡ Upgrade
       </button>
 
-    </div>
+    </section>
+
+    <section class="panel">
+
+      <div class="panel-title">
+        👥 Referral
+      </div>
+
+      <div id="referralLink" class="referral-link">
+        Loading referral link...
+      </div>
+
+      <button id="copyReferral" class="copy-button" type="button">
+        Copy Referral Link
+      </button>
+
+      <div class="referral-info">
+        Friends invited: <strong id="referralCount">0</strong>
+      </div>
+
+    </section>
+
+    <section class="panel">
+
+      <div class="panel-title">
+        🏆 Leaderboard
+      </div>
+
+      <div class="leaderboard-row">
+        <div class="rank">🥇</div>
+        <div class="player">QIVO Player</div>
+        <div class="score">12000</div>
+      </div>
+
+      <div class="leaderboard-row">
+        <div class="rank">🥈</div>
+        <div class="player">Crypto User</div>
+        <div class="score">9500</div>
+      </div>
+
+      <div class="leaderboard-row">
+        <div class="rank">🥉</div>
+        <div class="player">QIVO Miner</div>
+        <div class="score">7200</div>
+      </div>
+
+      <div class="leaderboard-row">
+        <div class="rank">4</div>
+        <div class="player">New Player</div>
+        <div class="score">5100</div>
+      </div>
+
+      <div class="my-rank">
+        <span>Your Rank</span>
+        <strong id="myRank">#5</strong>
+      </div>
+
+    </section>
 
     <div class="hint">
-      QIVO V1
+      Tap to collect coins
     </div>
 
   </div>
@@ -311,208 +441,203 @@
     const ENERGY_PER_TAP = 1;
     const ENERGY_RECHARGE_TIME = 3000;
 
-    let balance =
-      Number(localStorage.getItem("qivo_balance")) || 0;
+    let balance = Number(localStorage.getItem("qivo_balance")) || 0;
+    let energy = Number(localStorage.getItem("qivo_energy"));
 
-    let energy =
-      Number(localStorage.getItem("qivo_energy"));
+    if (isNaN(energy)) {
+      energy = MAX_ENERGY;
+    }
 
-    let level =
-      Number(localStorage.getItem("qivo_level")) || 1;
-
-    let tapPower =
-      Number(localStorage.getItem("qivo_tap_power")) || 1;
+    let level = Number(localStorage.getItem("qivo_level")) || 1;
+    let tapPower = Number(localStorage.getItem("qivo_tap_power")) || 1;
 
     let lastDailyReward =
       Number(localStorage.getItem("qivo_daily_reward")) || 0;
 
-    if (!Number.isFinite(energy)) {
-      energy = MAX_ENERGY;
-    }
+    let referralCount =
+      Number(localStorage.getItem("qivo_referral_count")) || 0;
 
-    const balanceElement =
-      document.getElementById("balance");
+    const balanceElement = document.getElementById("balance");
+    const energyText = document.getElementById("energyText");
+    const energyFill = document.getElementById("energyFill");
+    const levelElement = document.getElementById("level");
+    const tapPowerElement = document.getElementById("tapPower");
 
-    const energyElement =
-      document.getElementById("energy");
+    const tapButton = document.getElementById("tapButton");
+    const dailyButton = document.getElementById("dailyButton");
+    const upgradeButton = document.getElementById("upgradeButton");
 
-    const energyFill =
-      document.getElementById("energyFill");
+    const referralLinkElement =
+      document.getElementById("referralLink");
 
-    const levelElement =
-      document.getElementById("level");
+    const copyReferralButton =
+      document.getElementById("copyReferral");
 
-    const tapPowerElement =
-      document.getElementById("tapPower");
-
-    const tapButton =
-      document.getElementById("tapButton");
-
-    const dailyButton =
-      document.getElementById("dailyButton");
-
-    const upgradeButton =
-      document.getElementById("upgradeButton");
+    const referralCountElement =
+      document.getElementById("referralCount");
 
     function saveData() {
-      localStorage.setItem(
-        "qivo_balance",
-        balance
-      );
-
-      localStorage.setItem(
-        "qivo_energy",
-        energy
-      );
-
-      localStorage.setItem(
-        "qivo_level",
-        level
-      );
-
-      localStorage.setItem(
-        "qivo_tap_power",
-        tapPower
-      );
-
-      localStorage.setItem(
-        "qivo_daily_reward",
-        lastDailyReward
-      );
+      localStorage.setItem("qivo_balance", balance);
+      localStorage.setItem("qivo_energy", energy);
+      localStorage.setItem("qivo_level", level);
+      localStorage.setItem("qivo_tap_power", tapPower);
+      localStorage.setItem("qivo_daily_reward", lastDailyReward);
+      localStorage.setItem("qivo_referral_count", referralCount);
     }
 
     function updateUI() {
       balanceElement.textContent =
         balance.toLocaleString("en-US");
 
-      energyElement.textContent =
-        Math.floor(energy);
-
-      levelElement.textContent =
-        level;
-
-      tapPowerElement.textContent =
-        tapPower;
+      energyText.textContent =
+        energy + " / " + MAX_ENERGY;
 
       energyFill.style.width =
-        ((energy / MAX_ENERGY) * 100) + "%";
+        (energy / MAX_ENERGY * 100) + "%";
 
-      tapButton.classList.toggle(
-        "disabled",
-        energy < ENERGY_PER_TAP
-      );
+      levelElement.textContent = level;
+      tapPowerElement.textContent = tapPower;
+      referralCountElement.textContent = referralCount;
     }
 
-    tapButton.addEventListener(
-      "click",
-      function () {
+    tapButton.addEventListener("click", function () {
 
-        if (energy < ENERGY_PER_TAP) {
-          return;
+      if (energy < ENERGY_PER_TAP) {
+        return;
+      }
+
+      balance += tapPower;
+      energy -= ENERGY_PER_TAP;
+
+      saveData();
+      updateUI();
+    });
+
+    setInterval(function () {
+
+      if (energy < MAX_ENERGY) {
+        energy += 1;
+
+        if (energy > MAX_ENERGY) {
+          energy = MAX_ENERGY;
         }
-
-        balance += tapPower;
-        energy -= ENERGY_PER_TAP;
 
         saveData();
         updateUI();
       }
-    );
 
-    dailyButton.addEventListener(
-      "click",
-      function () {
+    }, ENERGY_RECHARGE_TIME);
 
-        const now = Date.now();
-        const oneDay = 24 * 60 * 60 * 1000;
+    dailyButton.addEventListener("click", function () {
 
-        if (
-          lastDailyReward === 0 ||
-          now - lastDailyReward >= oneDay
-        ) {
+      const now = Date.now();
+      const oneDay = 24 * 60 * 60 * 1000;
 
-          const reward = 100;
+      if (now - lastDailyReward < oneDay) {
 
-          balance += reward;
-          lastDailyReward = now;
+        const remaining =
+          oneDay - (now - lastDailyReward);
 
-          saveData();
-          updateUI();
-
-          alert(
-            "Daily Reward claimed! +100 coins"
-          );
-
-        } else {
-
-          const remaining =
-            oneDay -
-            (now - lastDailyReward);
-
-          const hours =
-            Math.ceil(
-              remaining / (60 * 60 * 1000)
-            );
-
-          alert(
-            "Daily Reward is available again in " +
-            hours +
-            " hours."
-          );
-        }
-      }
-    );
-
-    upgradeButton.addEventListener(
-      "click",
-      function () {
-
-        const cost = level * 100;
-
-        if (balance < cost) {
-
-          alert(
-            "You need " +
-            cost +
-            " coins to upgrade."
-          );
-
-          return;
-        }
-
-        balance -= cost;
-        level += 1;
-        tapPower += 1;
-
-        saveData();
-        updateUI();
+        const hours =
+          Math.ceil(remaining / (60 * 60 * 1000));
 
         alert(
-          "Upgrade successful! Tap Power is now " +
-          tapPower
+          "Daily reward already claimed.\nCome back in " +
+          hours +
+          " hour(s)."
+        );
+
+        return;
+      }
+
+      balance += 100;
+      lastDailyReward = now;
+
+      saveData();
+      updateUI();
+
+      alert("🎁 +100 coins added!");
+    });
+
+    upgradeButton.addEventListener("click", function () {
+
+      const upgradeCost = level * 100;
+
+      if (balance < upgradeCost) {
+
+        alert(
+          "You need " +
+          upgradeCost.toLocaleString("en-US") +
+          " coins to upgrade."
+        );
+
+        return;
+      }
+
+      balance -= upgradeCost;
+      level += 1;
+      tapPower += 1;
+
+      saveData();
+      updateUI();
+
+      alert(
+        "⚡ Upgrade successful!\n" +
+        "Level " +
+        level +
+        "\nTap Power +" +
+        tapPower
+      );
+    });
+
+    function createReferralLink() {
+
+      let userId = "demo";
+
+      if (
+        tg &&
+        tg.initDataUnsafe &&
+        tg.initDataUnsafe.user
+      ) {
+        userId = tg.initDataUnsafe.user.id;
+      }
+
+      const botUsername = "QIVO_BOT";
+
+      const link =
+        "https://t.me/" +
+        botUsername +
+        "?start=ref_" +
+        userId;
+
+      referralLinkElement.textContent = link;
+    }
+
+    copyReferralButton.addEventListener("click", async function () {
+
+      const link =
+        referralLinkElement.textContent;
+
+      try {
+
+        await navigator.clipboard.writeText(link);
+
+        copyReferralButton.textContent = "Copied!";
+
+        setTimeout(function () {
+          copyReferralButton.textContent =
+            "Copy Referral Link";
+        }, 1500);
+
+      } catch (error) {
+
+        alert(
+          "Copy failed. Please copy the link manually."
         );
       }
-    );
+    });
 
-    setInterval(
-      function () {
-
-        if (energy < MAX_ENERGY) {
-
-          energy += 1;
-
-          if (energy > MAX_ENERGY) {
-            energy = MAX_ENERGY;
-          }
-
-          saveData();
-          updateUI();
-        }
-
-      },
-      ENERGY_RECHARGE_TIME
-    );
-
+    createReferralLink();
     updateUI();
   </script>
 
