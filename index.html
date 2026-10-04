@@ -180,6 +180,7 @@
       user-select: none;
       -webkit-user-select: none;
       -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
 
       background:
         radial-gradient(
@@ -194,11 +195,16 @@
         inset 0 4px 12px rgba(255,255,255,0.25),
         inset 0 -8px 18px rgba(0,0,0,0.18);
 
-      transition: transform .08s ease;
+      transition: transform .05s ease, opacity .15s ease;
     }
 
     .tap-button:active {
       transform: scale(.92);
+    }
+
+    .tap-button.disabled {
+      opacity: .35;
+      cursor: not-allowed;
     }
 
     .stats {
@@ -260,7 +266,36 @@
       width: 100%;
       background: linear-gradient(90deg,#7567ff,#aaa2ff);
       border-radius: 20px;
-      transition: width .2s ease;
+      transition: width .08s ease;
+    }
+
+    .quota-section {
+      width: 100%;
+      margin-top: 10px;
+      padding: 14px 15px;
+      border-radius: 17px;
+      background: rgba(117,103,255,.075);
+      border: 1px solid rgba(117,103,255,.15);
+      text-align: center;
+    }
+
+    .quota-title {
+      font-size: 10px;
+      opacity: .48;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+    }
+
+    .quota-value {
+      margin-top: 5px;
+      font-size: 21px;
+      font-weight: 900;
+    }
+
+    .quota-timer {
+      margin-top: 4px;
+      font-size: 10px;
+      opacity: .55;
     }
 
     .menu-grid {
@@ -679,6 +714,22 @@
 
   </section>
 
+  <section class="quota-section">
+
+    <div class="quota-title">
+      TAP QUOTA
+    </div>
+
+    <div id="quotaValue" class="quota-value">
+      1000 / 1000
+    </div>
+
+    <div id="quotaTimer" class="quota-timer">
+      Recharge in 08:00:00
+    </div>
+
+  </section>
+
   <section class="menu-grid">
 
     <button id="dailyMenu" class="menu-button" type="button">
@@ -980,7 +1031,9 @@
   const MAX_ENERGY = 1000;
   const ENERGY_PER_TAP = 1;
   const ENERGY_RECHARGE_TIME = 3000;
-  const ENERGY_SYNC_INTERVAL = 15000;
+
+  const MAX_TAP_QUOTA = 1000;
+  const QUOTA_RESET_SECONDS = 8 * 60 * 60;
 
   const DAILY_REWARDS = [
     100,
@@ -1001,8 +1054,12 @@
   let lastDailyReward = 0;
   let taskCompleted = false;
 
+  let tapQuota = MAX_TAP_QUOTA;
+  let tapQuotaResetAt = 0;
+
   let backendReady = false;
-  let syncInProgress = false;
+  let activeTapRequests = 0;
+  let refreshInProgress = false;
 
   const balanceElement =
     document.getElementById("balance");
@@ -1040,6 +1097,13 @@
   const joinChannelTask =
     document.getElementById("joinChannelTask");
 
+  const quotaValue =
+    document.getElementById("quotaValue");
+
+  const quotaTimer =
+    document.getElementById("quotaTimer");
+
+
   function updateUI() {
 
     balanceElement.textContent =
@@ -1049,7 +1113,13 @@
       energy + " / " + MAX_ENERGY;
 
     energyFill.style.width =
-      (energy / MAX_ENERGY * 100) + "%";
+      Math.max(
+        0,
+        Math.min(
+          100,
+          energy / MAX_ENERGY * 100
+        )
+      ) + "%";
 
     levelElement.textContent =
       level;
@@ -1065,9 +1135,38 @@
         referralCount * 100
       ).toLocaleString("en-US");
 
+    quotaValue.textContent =
+      tapQuota.toLocaleString("en-US") +
+      " / " +
+      MAX_TAP_QUOTA;
+
+    updateTapButton();
     updateDailyUI();
     updateTaskUI();
   }
+
+
+  function updateTapButton() {
+
+    if (
+      !backendReady ||
+      tapQuota <= 0 ||
+      energy <= 0
+    ) {
+
+      tapButton.classList.add(
+        "disabled"
+      );
+
+    } else {
+
+      tapButton.classList.remove(
+        "disabled"
+      );
+
+    }
+  }
+
 
   /* QIVO API */
 
@@ -1147,16 +1246,136 @@
       );
     }
 
-    if (!data.success) {
-
-      throw new Error(
-        data.error ||
-        "QIVO API returned success=false"
-      );
-    }
-
     return data;
   }
+
+
+  /* SERVER STATE */
+
+  async function refreshServerState() {
+
+    if (!backendReady) {
+      return;
+    }
+
+    if (refreshInProgress) {
+      return;
+    }
+
+    refreshInProgress = true;
+
+    try {
+
+      const data =
+        await callAPI("init");
+
+      if (!data.user) {
+        throw new Error(
+          "User data was not returned"
+        );
+      }
+
+      applyServerUser(
+        data.user
+      );
+
+      updateUI();
+
+    } catch (error) {
+
+      console.error(
+        "QIVO refresh error:",
+        error
+      );
+
+    } finally {
+
+      refreshInProgress = false;
+
+    }
+  }
+
+
+  function applyServerUser(user) {
+
+    balance =
+      Number(user.balance) || 0;
+
+    energy =
+      Number(user.energy);
+
+    if (isNaN(energy)) {
+      energy = MAX_ENERGY;
+    }
+
+    energy =
+      Math.max(
+        0,
+        Math.min(
+          MAX_ENERGY,
+          energy
+        )
+      );
+
+    level =
+      Number(user.level) || 1;
+
+    tapPower =
+      Number(user.tap_power) || 1;
+
+    referralCount =
+      Number(user.referral_count) || 0;
+
+    dailyDay =
+      Number(user.daily_day) || 1;
+
+    if (dailyDay > 7) {
+      dailyDay = 7;
+    }
+
+    if (user.daily_claimed_at) {
+
+      lastDailyReward =
+        new Date(
+          user.daily_claimed_at
+        ).getTime();
+
+    }
+
+    taskCompleted =
+      user.task_join_channel === true;
+
+    tapQuota =
+      Number(user.tap_quota);
+
+    if (
+      isNaN(tapQuota)
+    ) {
+      tapQuota =
+        MAX_TAP_QUOTA;
+    }
+
+    tapQuota =
+      Math.max(
+        0,
+        Math.min(
+          MAX_TAP_QUOTA,
+          tapQuota
+        )
+      );
+
+    if (
+      user.tap_quota_reset_at
+    ) {
+
+      tapQuotaResetAt =
+        new Date(
+          user.tap_quota_reset_at
+        ).getTime();
+
+    }
+  }
+
 
   async function initializeQIVO() {
 
@@ -1177,44 +1396,9 @@
         );
       }
 
-      const user =
-        data.user;
-
-      balance =
-        Number(user.balance) || 0;
-
-      energy =
-        Number(user.energy);
-
-      if (isNaN(energy)) {
-        energy = MAX_ENERGY;
-      }
-
-      level =
-        Number(user.level) || 1;
-
-      tapPower =
-        Number(user.tap_power) || 1;
-
-      referralCount =
-        Number(user.referral_count) || 0;
-
-      dailyDay =
-        Number(user.daily_day) || 1;
-
-      if (dailyDay > 7) {
-        dailyDay = 7;
-      }
-
-      if (user.daily_claimed_at) {
-        lastDailyReward =
-          new Date(
-            user.daily_claimed_at
-          ).getTime();
-      }
-
-      taskCompleted =
-        user.task_join_channel === true;
+      applyServerUser(
+        data.user
+      );
 
       backendReady = true;
 
@@ -1244,158 +1428,156 @@
     }
   }
 
-  /* SECURE STATE SYNC */
 
-  async function syncQIVOState() {
-
-    if (!backendReady) {
-      return;
-    }
-
-    if (syncInProgress) {
-      return;
-    }
-
-    syncInProgress = true;
-
-    try {
-
-      const data =
-        await callAPI("sync");
-
-      if (
-        !data ||
-        data.success !== true
-      ) {
-        throw new Error(
-          data?.error ||
-          "State sync failed"
-        );
-      }
-
-      if (
-        data.balance !== undefined
-      ) {
-        balance =
-          Number(data.balance) || 0;
-      }
-
-      if (
-        data.energy !== undefined
-      ) {
-        energy =
-          Number(data.energy);
-
-        if (isNaN(energy)) {
-          energy = 0;
-        }
-
-        if (energy < 0) {
-          energy = 0;
-        }
-
-        if (energy > MAX_ENERGY) {
-          energy = MAX_ENERGY;
-        }
-      }
-
-      if (
-        data.level !== undefined
-      ) {
-        level =
-          Number(data.level) || 1;
-      }
-
-      if (
-        data.tap_power !== undefined
-      ) {
-        tapPower =
-          Number(data.tap_power) || 1;
-      }
-
-      updateUI();
-
-    } catch (error) {
-
-      console.error(
-        "QIVO state sync error:",
-        error
-      );
-
-    } finally {
-
-      syncInProgress = false;
-
-    }
-  }
-
-  /* TAP */
-
-  let tapQueue = Promise.resolve();
+  /* FAST TAP */
 
   tapButton.addEventListener(
     "click",
     function () {
 
       if (!backendReady) {
-        alert(
-          "QIVO is connecting to the server..."
-        );
         return;
       }
 
-      tapQueue =
-        tapQueue.then(
-          async function () {
+      if (tapQuota <= 0) {
 
-            try {
+        return;
+      }
 
-              const data =
-                await callAPI("tap");
+      if (energy <= 0) {
+
+        return;
+      }
+
+
+      /*
+       * Instant visual response.
+       */
+
+      balance += tapPower;
+      energy -= ENERGY_PER_TAP;
+      tapQuota -= 1;
+
+      if (energy < 0) {
+        energy = 0;
+      }
+
+      if (tapQuota < 0) {
+        tapQuota = 0;
+      }
+
+      updateUI();
+
+
+      /*
+       * Send the real TAP to the server
+       * without waiting for the UI.
+       */
+
+      activeTapRequests++;
+
+      callAPI("tap")
+        .then(
+          function (data) {
+
+            if (
+              data &&
+              data.success === true
+            ) {
 
               if (
-                !data ||
-                data.success !== true
+                data.balance !== undefined
               ) {
-                throw new Error(
-                  data?.error ||
-                  "Tap failed"
-                );
+                balance =
+                  Number(data.balance) || 0;
               }
 
-              balance =
-                Number(data.balance) || 0;
+              if (
+                data.energy !== undefined
+              ) {
+                energy =
+                  Number(data.energy);
 
-              energy =
-                Number(data.energy);
-
-              if (isNaN(energy)) {
-                energy = 0;
+                if (isNaN(energy)) {
+                  energy = 0;
+                }
               }
 
-              level =
-                Number(data.level) || 1;
+              if (
+                data.level !== undefined
+              ) {
+                level =
+                  Number(data.level) || 1;
+              }
 
-              tapPower =
-                Number(data.tap_power) || 1;
+              if (
+                data.tap_power !== undefined
+              ) {
+                tapPower =
+                  Number(data.tap_power) || 1;
+              }
+
+              if (
+                data.tap_quota !== undefined
+              ) {
+                tapQuota =
+                  Number(data.tap_quota);
+
+                if (isNaN(tapQuota)) {
+                  tapQuota = 0;
+                }
+              }
+
+              if (
+                data.tap_quota_reset_at
+              ) {
+                tapQuotaResetAt =
+                  new Date(
+                    data.tap_quota_reset_at
+                  ).getTime();
+              }
 
               updateUI();
 
-            } catch (error) {
-
-              console.error(
-                "QIVO tap error:",
-                error
-              );
+            } else {
 
               /*
-               * If the server says there is
-               * no energy, immediately sync
-               * the real server state.
+               * Server rejected this TAP.
+               * Restore authoritative state.
                */
 
-              await syncQIVOState();
+              refreshServerState();
 
+            }
+
+          }
+        )
+        .catch(
+          function (error) {
+
+            console.error(
+              "QIVO tap error:",
+              error
+            );
+
+            /*
+             * If connection failed,
+             * restore server state.
+             */
+
+            refreshServerState();
+
+          }
+        )
+        .finally(
+          function () {
+
+            activeTapRequests--;
+
+            if (
+              activeTapRequests < 0
+            ) {
+              activeTapRequests = 0;
             }
 
           }
@@ -1404,16 +1586,8 @@
     }
   );
 
-  /* ENERGY DISPLAY */
 
-  /*
-   * This local timer is only a visual
-   * countdown/recharge display.
-   *
-   * The server remains authoritative.
-   * Every TAP is checked by qivo_tap.
-   * State is also synchronized periodically.
-   */
+  /* ENERGY RECHARGE */
 
   setInterval(
     function () {
@@ -1438,48 +1612,81 @@
     ENERGY_RECHARGE_TIME
   );
 
-  /*
-   * Server state synchronization every 15 seconds.
-   */
 
-  setInterval(
-    function () {
+  /* QUOTA COUNTDOWN */
 
-      syncQIVOState();
+  function updateQuotaTimer() {
 
-    },
-    ENERGY_SYNC_INTERVAL
-  );
+    if (!tapQuotaResetAt) {
 
-  /*
-   * Sync immediately when the user
-   * returns to the Mini App.
-   */
+      quotaTimer.textContent =
+        "Recharge in 08:00:00";
 
-  document.addEventListener(
-    "visibilitychange",
-    function () {
+      return;
+    }
+
+    const remaining =
+      Math.max(
+        0,
+        tapQuotaResetAt -
+        Date.now()
+      );
+
+    if (remaining <= 0) {
+
+      quotaTimer.textContent =
+        "Recharge ready";
+
+      /*
+       * Ask the server for the
+       * new 1000 TAP quota.
+       */
 
       if (
-        document.visibilityState ===
-        "visible"
+        backendReady &&
+        !refreshInProgress
       ) {
-        syncQIVOState();
+
+        refreshServerState();
+
       }
 
+      return;
     }
+
+    const totalSeconds =
+      Math.floor(
+        remaining / 1000
+      );
+
+    const hours =
+      Math.floor(
+        totalSeconds / 3600
+      );
+
+    const minutes =
+      Math.floor(
+        (totalSeconds % 3600) / 60
+      );
+
+    const seconds =
+      totalSeconds % 60;
+
+    quotaTimer.textContent =
+      "Recharge in " +
+      String(hours).padStart(2, "0") +
+      ":" +
+      String(minutes).padStart(2, "0") +
+      ":" +
+      String(seconds).padStart(2, "0");
+  }
+
+
+  setInterval(
+    updateQuotaTimer,
+    1000
   );
 
-  if (tg) {
-
-    tg.onEvent(
-      "viewportChanged",
-      function () {
-        syncQIVOState();
-      }
-    );
-
-  }
 
   /* DAILY */
 
@@ -1529,6 +1736,7 @@
     }
   }
 
+
   dailyButton.addEventListener(
     "click",
     function () {
@@ -1539,6 +1747,7 @@
 
     }
   );
+
 
   /* UPGRADE */
 
@@ -1552,6 +1761,7 @@
 
     }
   );
+
 
   /* REFERRAL */
 
@@ -1576,6 +1786,7 @@
     referralLinkElement.textContent =
       link;
   }
+
 
   document
     .getElementById("copyReferral")
@@ -1614,6 +1825,7 @@
       }
     );
 
+
   /* TASKS */
 
   function updateTaskUI() {
@@ -1646,6 +1858,7 @@
     }
   }
 
+
   joinChannelTask.addEventListener(
     "click",
     function () {
@@ -1656,6 +1869,7 @@
 
     }
   );
+
 
   /* LEADERBOARD */
 
@@ -1752,6 +1966,7 @@
     }
   }
 
+
   function escapeHTML(value) {
 
     return String(value)
@@ -1761,6 +1976,7 @@
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#039;");
   }
+
 
   /* PANELS */
 
@@ -1775,6 +1991,7 @@
     "helpPanel",
     "profilePanel"
   ];
+
 
   function openPanel(id) {
 
@@ -1818,12 +2035,14 @@
     }
   }
 
+
   document
     .getElementById("dailyMenu")
     .addEventListener(
       "click",
       () => openPanel("dailyPanel")
     );
+
 
   document
     .getElementById("upgradeMenu")
@@ -1832,12 +2051,14 @@
       () => openPanel("upgradePanel")
     );
 
+
   document
     .getElementById("referralMenu")
     .addEventListener(
       "click",
       () => openPanel("referralPanel")
     );
+
 
   document
     .getElementById("leaderboardMenu")
@@ -1846,12 +2067,14 @@
       () => openPanel("leaderboardPanel")
     );
 
+
   document
     .getElementById("tasksMenu")
     .addEventListener(
       "click",
       () => openPanel("tasksPanel")
     );
+
 
   document
     .getElementById("walletMenu")
@@ -1860,12 +2083,14 @@
       () => openPanel("walletPanel")
     );
 
+
   document
     .getElementById("settingsMenu")
     .addEventListener(
       "click",
       () => openPanel("settingsPanel")
     );
+
 
   document
     .getElementById("helpMenu")
@@ -1874,12 +2099,14 @@
       () => openPanel("helpPanel")
     );
 
+
   document
     .getElementById("profileButton")
     .addEventListener(
       "click",
       () => openPanel("profilePanel")
     );
+
 
   document
     .getElementById("closeProfile")
@@ -1894,6 +2121,7 @@
       }
     );
 
+
   document
     .getElementById("connectWallet")
     .addEventListener(
@@ -1906,6 +2134,7 @@
 
       }
     );
+
 
   /* TELEGRAM USER */
 
@@ -2020,9 +2249,29 @@
     }
   }
 
+
+  document.addEventListener(
+    "visibilitychange",
+    function () {
+
+      if (
+        document.visibilityState ===
+        "visible" &&
+        backendReady
+      ) {
+
+        refreshServerState();
+
+      }
+
+    }
+  );
+
+
   loadTelegramUser();
   createReferralLink();
   updateUI();
+  updateQuotaTimer();
 
   initializeQIVO();
 
