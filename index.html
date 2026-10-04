@@ -1,3 +1,1247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <title>QIVO</title>
+
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+      background: #070b16;
+      color: #ffffff;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+      overflow-x: hidden;
+    }
+
+    button {
+      font-family: inherit;
+    }
+
+    .app {
+      width: 100%;
+      min-height: 100dvh;
+      padding: 18px 16px 35px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    .header {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 22px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .q-logo {
+      width: 47px;
+      height: 47px;
+      border-radius: 15px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #10172a;
+      border: 1px solid rgba(255,255,255,0.12);
+      overflow: hidden;
+    }
+
+    .q-logo::before {
+      content: "Q";
+      font-size: 32px;
+      font-weight: 900;
+      color: transparent;
+      -webkit-text-stroke: 2px #ffffff;
+      transform: rotate(-3deg);
+      opacity: 0.95;
+    }
+
+    .q-logo::after {
+      content: "";
+      position: absolute;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: 1px dashed rgba(255,255,255,0.55);
+      transform: rotate(25deg);
+    }
+
+    .brand-name {
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 2px;
+    }
+
+    .brand-subtitle {
+      margin-top: 3px;
+      font-size: 10px;
+      opacity: 0.45;
+      letter-spacing: 1px;
+    }
+
+    .profile-button {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: #11182a;
+      overflow: hidden;
+      padding: 0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .profile-button img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+    }
+
+    .profile-letter {
+      font-size: 17px;
+      font-weight: 800;
+    }
+
+    .balance-card {
+      width: 100%;
+      padding: 20px;
+      border-radius: 22px;
+      background: linear-gradient(
+        145deg,
+        rgba(117,103,255,0.18),
+        rgba(255,255,255,0.04)
+      );
+      border: 1px solid rgba(255,255,255,0.09);
+      text-align: center;
+      box-shadow: 0 15px 45px rgba(0,0,0,0.25);
+    }
+
+    .balance-label {
+      font-size: 11px;
+      opacity: 0.48;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+
+    .balance {
+      margin-top: 7px;
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+    }
+
+    .coin-label {
+      margin-top: 4px;
+      font-size: 11px;
+      opacity: 0.42;
+    }
+
+    .tap-area {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      margin-top: 25px;
+    }
+
+    .tap-button {
+      width: 195px;
+      height: 195px;
+      border-radius: 50%;
+      border: 0;
+      color: white;
+      font-size: 31px;
+      font-weight: 900;
+      letter-spacing: 3px;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+
+      background:
+        radial-gradient(
+          circle at 35% 25%,
+          rgba(255,255,255,0.28),
+          transparent 25%
+        ),
+        linear-gradient(145deg,#8175ff,#4937d0);
+
+      box-shadow:
+        0 20px 50px rgba(70,55,210,0.32),
+        inset 0 4px 12px rgba(255,255,255,0.25),
+        inset 0 -8px 18px rgba(0,0,0,0.18);
+
+      transition: transform .08s ease;
+    }
+
+    .tap-button:active {
+      transform: scale(.92);
+    }
+
+    .stats {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    .stat-box {
+      padding: 15px;
+      border-radius: 17px;
+      background: rgba(255,255,255,0.055);
+      border: 1px solid rgba(255,255,255,0.08);
+      text-align: center;
+    }
+
+    .stat-label {
+      font-size: 10px;
+      opacity: .45;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .stat-value {
+      margin-top: 5px;
+      font-size: 19px;
+      font-weight: 800;
+    }
+
+    .energy-section {
+      width: 100%;
+      margin-top: 15px;
+      padding: 15px;
+      border-radius: 17px;
+      background: rgba(255,255,255,0.045);
+      border: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .energy-top {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      opacity: .65;
+      margin-bottom: 8px;
+    }
+
+    .energy-bar {
+      width: 100%;
+      height: 8px;
+      background: rgba(255,255,255,.09);
+      border-radius: 20px;
+      overflow: hidden;
+    }
+
+    .energy-fill {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg,#7567ff,#aaa2ff);
+      border-radius: 20px;
+      transition: width .2s ease;
+    }
+
+    .menu-grid {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .menu-button {
+      min-height: 64px;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 17px;
+      background: rgba(255,255,255,.055);
+      color: white;
+      cursor: pointer;
+      text-align: left;
+      padding: 13px;
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      transition: transform .1s ease, background .15s ease;
+    }
+
+    .menu-button:active {
+      transform: scale(.97);
+    }
+
+    .menu-icon {
+      width: 37px;
+      height: 37px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(117,103,255,.16);
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .menu-title {
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .menu-small {
+      margin-top: 3px;
+      font-size: 9px;
+      opacity: .4;
+    }
+
+    .panel {
+      display: none;
+      width: 100%;
+      margin-top: 14px;
+      padding: 17px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.045);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+
+    .panel.active {
+      display: block;
+    }
+
+    .panel-title {
+      font-size: 16px;
+      font-weight: 800;
+      margin-bottom: 14px;
+    }
+
+    .panel-text {
+      font-size: 12px;
+      line-height: 1.7;
+      opacity: .62;
+    }
+
+    .referral-link {
+      width: 100%;
+      padding: 12px;
+      border-radius: 11px;
+      background: rgba(0,0,0,.25);
+      font-size: 10px;
+      color: rgba(255,255,255,.7);
+      word-break: break-all;
+      margin-bottom: 10px;
+    }
+
+    .copy-button {
+      width: 100%;
+      border: 0;
+      border-radius: 11px;
+      padding: 12px;
+      background: #7567ff;
+      color: white;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .referral-info {
+      margin-top: 11px;
+      text-align: center;
+      font-size: 11px;
+      opacity: .55;
+    }
+
+    .daily-progress {
+      display: grid;
+      grid-template-columns: repeat(7,1fr);
+      gap: 5px;
+      margin-bottom: 15px;
+    }
+
+    .day {
+      padding: 8px 2px;
+      border-radius: 9px;
+      background: rgba(255,255,255,.06);
+      text-align: center;
+      font-size: 9px;
+      opacity: .7;
+    }
+
+    .day.active {
+      background: rgba(117,103,255,.35);
+      opacity: 1;
+    }
+
+    .daily-reward-button {
+      width: 100%;
+      border: 0;
+      border-radius: 12px;
+      padding: 13px;
+      background: #7567ff;
+      color: white;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .task-item {
+      width: 100%;
+      padding: 14px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.055);
+      border: 1px solid rgba(255,255,255,.08);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .task-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 13px;
+      background: rgba(117,103,255,.16);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .task-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .task-title {
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .task-reward {
+      margin-top: 4px;
+      font-size: 10px;
+      color: rgba(255,255,255,.55);
+    }
+
+    .task-button {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 13px;
+      background: #7567ff;
+      color: white;
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .task-button.completed {
+      background: rgba(255,255,255,.10);
+      color: rgba(255,255,255,.45);
+      cursor: default;
+    }
+
+    .leaderboard-row {
+      display: flex;
+      align-items: center;
+      padding: 11px 0;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      font-size: 12px;
+    }
+
+    .rank {
+      width: 35px;
+      font-weight: 800;
+    }
+
+    .player {
+      flex: 1;
+    }
+
+    .score {
+      font-weight: 800;
+    }
+
+    .my-rank {
+      display: flex;
+      justify-content: space-between;
+      padding-top: 12px;
+      margin-top: 10px;
+      border-top: 1px solid rgba(255,255,255,.08);
+      font-size: 12px;
+    }
+
+    .profile-info {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      margin-bottom: 15px;
+    }
+
+    .profile-big {
+      width: 55px;
+      height: 55px;
+      border-radius: 50%;
+      background: #151d31;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .profile-big img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+    }
+
+    .profile-big-letter {
+      font-size: 21px;
+      font-weight: 800;
+    }
+
+    .profile-name {
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .profile-username {
+      margin-top: 4px;
+      font-size: 11px;
+      opacity: .45;
+    }
+
+    .user-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 0;
+      font-size: 11px;
+      border-bottom: 1px solid rgba(255,255,255,.05);
+    }
+
+    .user-label {
+      opacity: .45;
+    }
+
+    .user-value {
+      text-align: right;
+      word-break: break-all;
+      font-weight: 700;
+    }
+
+    .wallet-box {
+      padding: 16px;
+      border-radius: 15px;
+      background: rgba(117,103,255,.09);
+      border: 1px solid rgba(117,103,255,.15);
+      text-align: center;
+    }
+
+    .wallet-status {
+      font-size: 12px;
+      opacity: .6;
+      margin-bottom: 12px;
+    }
+
+    .connect-wallet {
+      width: 100%;
+      border: 0;
+      border-radius: 11px;
+      padding: 13px;
+      background: #7567ff;
+      color: white;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .close-panel {
+      width: 100%;
+      margin-top: 12px;
+      padding: 11px;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 11px;
+      background: rgba(255,255,255,.04);
+      color: white;
+      cursor: pointer;
+    }
+
+    .hint {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 10px;
+      opacity: .3;
+    }
+
+    @media (max-width: 380px) {
+      .tap-button {
+        width: 170px;
+        height: 170px;
+        font-size: 27px;
+      }
+
+      .app {
+        padding-left: 13px;
+        padding-right: 13px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <header class="header">
+
+    <div class="brand">
+      <div class="q-logo"></div>
+
+      <div>
+        <div class="brand-name">QIVO</div>
+        <div class="brand-subtitle">TAP • EARN • LEVEL UP</div>
+      </div>
+    </div>
+
+    <button id="profileButton" class="profile-button" type="button">
+      <img id="profileImage" alt="Profile">
+      <span id="profileLetter" class="profile-letter">Q</span>
+    </button>
+
+  </header>
+
+  <section class="balance-card">
+
+    <div class="balance-label">
+      Your Balance
+    </div>
+
+    <div class="balance">
+      <span id="balance">0</span>
+    </div>
+
+    <div class="coin-label">
+      QIVO POINTS
+    </div>
+
+  </section>
+
+  <main class="tap-area">
+
+    <button id="tapButton" class="tap-button" type="button">
+      TAP
+    </button>
+
+  </main>
+
+  <section class="stats">
+
+    <div class="stat-box">
+      <div class="stat-label">Level</div>
+      <div id="level" class="stat-value">1</div>
+    </div>
+
+    <div class="stat-box">
+      <div class="stat-label">Tap Power</div>
+      <div id="tapPower" class="stat-value">1</div>
+    </div>
+
+  </section>
+
+  <section class="energy-section">
+
+    <div class="energy-top">
+      <span>⚡ Energy</span>
+      <span id="energyText">1000 / 1000</span>
+    </div>
+
+    <div class="energy-bar">
+      <div id="energyFill" class="energy-fill"></div>
+    </div>
+
+  </section>
+
+  <section class="menu-grid">
+
+    <button id="dailyMenu" class="menu-button" type="button">
+      <div class="menu-icon">🎁</div>
+      <div>
+        <div class="menu-title">Daily Reward</div>
+        <div class="menu-small">Claim daily points</div>
+      </div>
+    </button>
+
+    <button id="upgradeMenu" class="menu-button" type="button">
+      <div class="menu-icon">⚡</div>
+      <div>
+        <div class="menu-title">Upgrade</div>
+        <div class="menu-small">Increase tap power</div>
+      </div>
+    </button>
+
+    <button id="referralMenu" class="menu-button" type="button">
+      <div class="menu-icon">👥</div>
+      <div>
+        <div class="menu-title">Referral</div>
+        <div class="menu-small">+100 per referral</div>
+      </div>
+    </button>
+
+    <button id="leaderboardMenu" class="menu-button" type="button">
+      <div class="menu-icon">🏆</div>
+      <div>
+        <div class="menu-title">Leaderboard</div>
+        <div class="menu-small">Top QIVO players</div>
+      </div>
+    </button>
+
+    <button id="tasksMenu" class="menu-button" type="button">
+      <div class="menu-icon">✅</div>
+      <div>
+        <div class="menu-title">Tasks</div>
+        <div class="menu-small">Earn extra points</div>
+      </div>
+    </button>
+
+    <button id="walletMenu" class="menu-button" type="button">
+      <div class="menu-icon">💎</div>
+      <div>
+        <div class="menu-title">Wallet</div>
+        <div class="menu-small">Connect later</div>
+      </div>
+    </button>
+
+    <button id="settingsMenu" class="menu-button" type="button">
+      <div class="menu-icon">⚙️</div>
+      <div>
+        <div class="menu-title">Settings</div>
+        <div class="menu-small">App settings</div>
+      </div>
+    </button>
+
+    <button id="helpMenu" class="menu-button" type="button">
+      <div class="menu-icon">❓</div>
+      <div>
+        <div class="menu-title">Help</div>
+        <div class="menu-small">How QIVO works</div>
+      </div>
+    </button>
+
+  </section>
+
+  <section id="dailyPanel" class="panel">
+
+    <div class="panel-title">
+      🎁 Daily Reward
+    </div>
+
+    <div class="daily-progress">
+
+      <div id="day1" class="day">DAY 1<br>100</div>
+      <div id="day2" class="day">DAY 2<br>200</div>
+      <div id="day3" class="day">DAY 3<br>300</div>
+      <div id="day4" class="day">DAY 4<br>400</div>
+      <div id="day5" class="day">DAY 5<br>500</div>
+      <div id="day6" class="day">DAY 6<br>600</div>
+      <div id="day7" class="day">DAY 7<br>700</div>
+
+    </div>
+
+    <button id="dailyButton" class="daily-reward-button" type="button">
+      Claim Today's Reward
+    </button>
+
+  </section>
+
+  <section id="upgradePanel" class="panel">
+
+    <div class="panel-title">
+      ⚡ Upgrade
+    </div>
+
+    <div class="panel-text">
+      Increase your Tap Power and earn more QIVO points with every tap.
+    </div>
+
+    <button id="upgradeButton" class="daily-reward-button" type="button" style="margin-top:14px;">
+      Upgrade
+    </button>
+
+  </section>
+
+  <section id="referralPanel" class="panel">
+
+    <div class="panel-title">
+      👥 Referral
+    </div>
+
+    <div class="panel-text" style="margin-bottom:12px;">
+      Invite friends and earn 100 QIVO points for every successful referral.
+    </div>
+
+    <div id="referralLink" class="referral-link">
+      Loading referral link...
+    </div>
+
+    <button id="copyReferral" class="copy-button" type="button">
+      Copy Referral Link
+    </button>
+
+    <div class="referral-info">
+      Friends invited:
+      <strong id="referralCount">0</strong>
+      · Earned:
+      <strong id="referralEarned">0</strong>
+    </div>
+
+  </section>
+
+  <section id="leaderboardPanel" class="panel">
+
+    <div class="panel-title">
+      🏆 Leaderboard
+    </div>
+
+    <div id="leaderboardContent">
+      Loading leaderboard...
+    </div>
+
+    <div class="my-rank">
+      <span>Your Rank</span>
+      <strong id="myRank">-</strong>
+    </div>
+
+  </section>
+
+  <section id="tasksPanel" class="panel">
+
+    <div class="panel-title">
+      ✅ Tasks
+    </div>
+
+    <div class="task-item">
+
+      <div class="task-icon">
+        📢
+      </div>
+
+      <div class="task-info">
+
+        <div class="task-title">
+          Join Telegram Channel
+        </div>
+
+        <div class="task-reward">
+          +500 Points
+        </div>
+
+      </div>
+
+      <button id="joinChannelTask" class="task-button" type="button">
+        Join
+      </button>
+
+    </div>
+
+  </section>
+
+  <section id="walletPanel" class="panel">
+
+    <div class="panel-title">
+      💎 Wallet
+    </div>
+
+    <div class="wallet-box">
+
+      <div class="wallet-status">
+        Wallet connection will be available later.
+      </div>
+
+      <button id="connectWallet" class="connect-wallet" type="button">
+        Connect Wallet
+      </button>
+
+    </div>
+
+  </section>
+
+  <section id="settingsPanel" class="panel">
+
+    <div class="panel-title">
+      ⚙️ Settings
+    </div>
+
+    <div class="panel-text">
+      QIVO settings will be expanded when the backend is connected.
+    </div>
+
+  </section>
+
+  <section id="helpPanel" class="panel">
+
+    <div class="panel-title">
+      ❓ How QIVO Works
+    </div>
+
+    <div class="panel-text">
+      Tap the QIVO button to earn points.<br><br>
+      Use your points to upgrade your Tap Power.<br><br>
+      Claim your Daily Reward every day for seven days.<br><br>
+      Invite friends and earn 100 points for each successful referral.<br><br>
+      Your account data is now connected to the QIVO backend.
+    </div>
+
+  </section>
+
+  <section id="profilePanel" class="panel">
+
+    <div class="panel-title">
+      👤 Telegram Profile
+    </div>
+
+    <div class="profile-info">
+
+      <div class="profile-big">
+
+        <img id="profileBigImage" alt="Profile">
+
+        <span id="profileBigLetter" class="profile-big-letter">
+          Q
+        </span>
+
+      </div>
+
+      <div>
+
+        <div id="profileName" class="profile-name">
+          Loading...
+        </div>
+
+        <div id="profileUsername" class="profile-username">
+          Loading...
+        </div>
+
+      </div>
+
+    </div>
+
+    <div class="user-row">
+      <span class="user-label">User ID</span>
+      <span id="telegramUserId" class="user-value">Loading...</span>
+    </div>
+
+    <div class="user-row">
+      <span class="user-label">Start Parameter</span>
+      <span id="startParameter" class="user-value">None</span>
+    </div>
+
+    <button id="closeProfile" class="close-panel" type="button">
+      Close
+    </button>
+
+  </section>
+
+  <div class="hint">
+    Tap to collect QIVO points
+  </div>
+
+</div>
+
+<script>
+
+  const tg = window.Telegram?.WebApp;
+
+  if (tg) {
+    tg.ready();
+    tg.expand();
+  }
+
+  const API_URL =
+    "https://novnehefsczesiczzotv.supabase.co/functions/v1/qivo-api";
+
+  const MAX_ENERGY = 1000;
+  const ENERGY_PER_TAP = 1;
+  const ENERGY_RECHARGE_TIME = 3000;
+
+  const DAILY_REWARDS = [
+    100,
+    200,
+    300,
+    400,
+    500,
+    600,
+    700
+  ];
+
+  let balance = 0;
+  let energy = MAX_ENERGY;
+  let level = 1;
+  let tapPower = 1;
+  let referralCount = 0;
+  let dailyDay = 0;
+  let lastDailyReward = 0;
+  let taskCompleted = false;
+
+  let backendReady = false;
+
+  const balanceElement =
+    document.getElementById("balance");
+
+  const energyText =
+    document.getElementById("energyText");
+
+  const energyFill =
+    document.getElementById("energyFill");
+
+  const levelElement =
+    document.getElementById("level");
+
+  const tapPowerElement =
+    document.getElementById("tapPower");
+
+  const referralCountElement =
+    document.getElementById("referralCount");
+
+  const referralEarnedElement =
+    document.getElementById("referralEarned");
+
+  const referralLinkElement =
+    document.getElementById("referralLink");
+
+  const dailyButton =
+    document.getElementById("dailyButton");
+
+  const upgradeButton =
+    document.getElementById("upgradeButton");
+
+  const tapButton =
+    document.getElementById("tapButton");
+
+  const joinChannelTask =
+    document.getElementById("joinChannelTask");
+
+  function updateUI() {
+
+    balanceElement.textContent =
+      balance.toLocaleString("en-US");
+
+    energyText.textContent =
+      energy + " / " + MAX_ENERGY;
+
+    energyFill.style.width =
+      (energy / MAX_ENERGY * 100) + "%";
+
+    levelElement.textContent =
+      level;
+
+    tapPowerElement.textContent =
+      tapPower;
+
+    referralCountElement.textContent =
+      referralCount;
+
+    referralEarnedElement.textContent =
+      (
+        referralCount * 100
+      ).toLocaleString("en-US");
+
+    updateDailyUI();
+    updateTaskUI();
+  }
+
+  /* QIVO API */
+
+  async function callAPI(action) {
+
+    if (!tg) {
+      throw new Error(
+        "Telegram WebApp is not available"
+      );
+    }
+
+    if (!tg.initData) {
+      throw new Error(
+        "Telegram initData is empty"
+      );
+    }
+
+    let response;
+
+    try {
+
+      response = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          action: action,
+          initData: tg.initData
+        })
+      });
+
+    } catch (networkError) {
+
+      throw new Error(
+        "Network error while connecting to QIVO API: " +
+        (
+          networkError instanceof Error
+            ? networkError.message
+            : String(networkError)
+        )
+      );
+    }
+
+    const responseText =
+      await response.text();
+
+    let data = null;
+
+    try {
+
+      data =
+        JSON.parse(responseText);
+
+    } catch {
+
+      throw new Error(
+        "QIVO API returned non-JSON response.\n\n" +
+        "HTTP Status: " +
+        response.status +
+        "\n\n" +
+        responseText
+      );
+    }
+
+    if (!response.ok) {
+
+      throw new Error(
+        "QIVO API HTTP " +
+        response.status +
+        "\n\n" +
+        (
+          data.error ||
+          responseText ||
+          "Unknown server error"
+        )
+      );
+    }
+
+    if (!data.success) {
+
+      throw new Error(
+        data.error ||
+        "QIVO API returned success=false"
+      );
+    }
+
+    return data;
+  }
+
+  async function initializeQIVO() {
+
+    try {
+
+      if (!tg || !tg.initData) {
+        throw new Error(
+          "QIVO must be opened inside Telegram"
+        );
+      }
+
+      const data =
+        await callAPI("init");
+
+      if (!data.user) {
+        throw new Error(
+          "User data was not returned"
+        );
+      }
+
+      const user =
+        data.user;
+
+      balance =
+        Number(user.balance) || 0;
+
+      energy =
+        Number(user.energy);
+
+      if (isNaN(energy)) {
+        energy = MAX_ENERGY;
+      }
+
+      level =
+        Number(user.level) || 1;
+
+      tapPower =
+        Number(user.tap_power) || 1;
+
+      referralCount =
+        Number(user.referral_count) || 0;
+
+      dailyDay =
+        Number(user.daily_day) || 1;
+
+      if (dailyDay > 7) {
+        dailyDay = 7;
+      }
+
+      if (user.daily_claimed_at) {
+        lastDailyReward =
+          new Date(
+            user.daily_claimed_at
+          ).getTime();
+      }
+
+      taskCompleted =
+        user.task_join_channel === true;
+
+      backendReady = true;
+
+      updateUI();
+
+      console.log(
+        "QIVO backend connected"
+      );
+
+    } catch (error) {
+
+      console.error(
+        "QIVO initialization error:",
+        error
+      );
+
+      backendReady = false;
+
+      alert(
+        "QIVO backend connection failed.\n\n" +
+        (
+          error instanceof Error
+            ? error.message
+            : String(error)
+        )
+      );
+    }
+  }
+
   /* TAP */
 
   let tapQueue = Promise.resolve();
@@ -13,12 +1257,8 @@
         return;
       }
 
-      /*
-       * Queue taps so rapid clicks are processed
-       * one by one and never overwrite each other.
-       */
-      tapQueue = tapQueue
-        .then(
+      tapQueue =
+        tapQueue.then(
           async function () {
 
             try {
@@ -26,18 +1266,15 @@
               const data =
                 await callAPI("tap");
 
-              if (!data || data.success !== true) {
+              if (
+                !data ||
+                data.success !== true
+              ) {
                 throw new Error(
                   data?.error ||
                   "Tap failed"
                 );
               }
-
-              /*
-               * The server is authoritative.
-               * Always use the values returned
-               * by the secure backend.
-               */
 
               balance =
                 Number(data.balance) || 0;
@@ -60,41 +1297,589 @@
             } catch (error) {
 
               console.error(
-                "Tap error:",
+                "QIVO tap error:",
                 error
               );
 
-              /*
-               * Do not change balance locally
-               * when the server rejects the tap.
-               */
-
-              if (
-                error instanceof Error &&
-                error.message !== "No energy"
-              ) {
-
-                console.error(
-                  "QIVO tap request failed:",
-                  error.message
-                );
-
-              }
-
             }
-
-          }
-        )
-        .catch(
-          function (error) {
-
-            console.error(
-              "QIVO tap queue error:",
-              error
-            );
 
           }
         );
 
     }
   );
+
+  /* ENERGY */
+
+  setInterval(
+    function () {
+
+      if (!backendReady) {
+        return;
+      }
+
+      if (energy < MAX_ENERGY) {
+
+        energy += 1;
+
+        if (energy > MAX_ENERGY) {
+          energy = MAX_ENERGY;
+        }
+
+        updateUI();
+
+      }
+
+    },
+    ENERGY_RECHARGE_TIME
+  );
+
+  /* DAILY */
+
+  function updateDailyUI() {
+
+    for (let i = 1; i <= 7; i++) {
+
+      const day =
+        document.getElementById(
+          "day" + i
+        );
+
+      if (!day) continue;
+
+      day.classList.remove("active");
+
+      if (
+        i === dailyDay + 1 &&
+        dailyDay < 7
+      ) {
+        day.classList.add("active");
+      }
+    }
+
+    if (dailyDay >= 7) {
+
+      dailyButton.textContent =
+        "7-Day Reward Complete";
+
+      dailyButton.disabled = true;
+      dailyButton.style.opacity = "0.5";
+
+    } else {
+
+      const reward =
+        DAILY_REWARDS[
+          Math.max(0, dailyDay)
+        ];
+
+      dailyButton.textContent =
+        "Claim +" +
+        reward +
+        " Points";
+
+      dailyButton.disabled = false;
+      dailyButton.style.opacity = "1";
+    }
+  }
+
+  dailyButton.addEventListener(
+    "click",
+    function () {
+
+      alert(
+        "Daily Reward will be connected to the secure backend next."
+      );
+
+    }
+  );
+
+  /* UPGRADE */
+
+  upgradeButton.addEventListener(
+    "click",
+    function () {
+
+      alert(
+        "Upgrade will be connected to the secure backend next."
+      );
+
+    }
+  );
+
+  /* REFERRAL */
+
+  function createReferralLink() {
+
+    let userId = "demo";
+
+    if (
+      tg &&
+      tg.initDataUnsafe &&
+      tg.initDataUnsafe.user
+    ) {
+
+      userId =
+        tg.initDataUnsafe.user.id;
+    }
+
+    const link =
+      "https://t.me/Qivotapbot?start=ref_" +
+      userId;
+
+    referralLinkElement.textContent =
+      link;
+  }
+
+  document
+    .getElementById("copyReferral")
+    .addEventListener(
+      "click",
+      async function () {
+
+        const link =
+          referralLinkElement.textContent;
+
+        try {
+
+          await navigator.clipboard.writeText(
+            link
+          );
+
+          this.textContent =
+            "Copied!";
+
+          setTimeout(
+            () => {
+              this.textContent =
+                "Copy Referral Link";
+            },
+            1500
+          );
+
+        } catch (error) {
+
+          alert(
+            "Copy failed. Please copy the link manually."
+          );
+
+        }
+
+      }
+    );
+
+  /* TASKS */
+
+  function updateTaskUI() {
+
+    if (!joinChannelTask) {
+      return;
+    }
+
+    if (taskCompleted) {
+
+      joinChannelTask.textContent =
+        "Completed";
+
+      joinChannelTask.classList.add(
+        "completed"
+      );
+
+      joinChannelTask.disabled = true;
+
+    } else {
+
+      joinChannelTask.textContent =
+        "Join";
+
+      joinChannelTask.classList.remove(
+        "completed"
+      );
+
+      joinChannelTask.disabled = false;
+    }
+  }
+
+  joinChannelTask.addEventListener(
+    "click",
+    function () {
+
+      alert(
+        "Task verification will be connected to the secure backend next."
+      );
+
+    }
+  );
+
+  /* LEADERBOARD */
+
+  async function loadLeaderboard() {
+
+    const container =
+      document.getElementById(
+        "leaderboardContent"
+      );
+
+    try {
+
+      const data =
+        await callAPI("leaderboard");
+
+      const rows =
+        data.leaderboard || [];
+
+      if (!rows.length) {
+
+        container.innerHTML =
+          "No players yet.";
+
+        return;
+      }
+
+      container.innerHTML = "";
+
+      let myPosition = "-";
+
+      rows.forEach(
+        (player, index) => {
+
+          const row =
+            document.createElement("div");
+
+          row.className =
+            "leaderboard-row";
+
+          const name =
+            player.username
+              ? "@" + player.username
+              : (
+                player.first_name ||
+                "QIVO Player"
+              );
+
+          row.innerHTML =
+            `
+              <div class="rank">
+                ${index + 1}
+              </div>
+
+              <div class="player">
+                ${escapeHTML(name)}
+              </div>
+
+              <div class="score">
+                ${Number(player.balance || 0).toLocaleString("en-US")}
+              </div>
+            `;
+
+          container.appendChild(row);
+
+          if (
+            tg &&
+            tg.initDataUnsafe &&
+            tg.initDataUnsafe.user &&
+            Number(player.telegram_id) ===
+            Number(tg.initDataUnsafe.user.id)
+          ) {
+
+            myPosition =
+              "#" + (index + 1);
+          }
+
+        }
+      );
+
+      document.getElementById(
+        "myRank"
+      ).textContent =
+        myPosition;
+
+    } catch (error) {
+
+      console.error(
+        "Leaderboard error:",
+        error
+      );
+
+      container.textContent =
+        "Unable to load leaderboard.";
+    }
+  }
+
+  function escapeHTML(value) {
+
+    return String(value)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  /* PANELS */
+
+  const panels = [
+    "dailyPanel",
+    "upgradePanel",
+    "referralPanel",
+    "leaderboardPanel",
+    "tasksPanel",
+    "walletPanel",
+    "settingsPanel",
+    "helpPanel",
+    "profilePanel"
+  ];
+
+  function openPanel(id) {
+
+    panels.forEach(
+      panelId => {
+
+        const panel =
+          document.getElementById(
+            panelId
+          );
+
+        if (panel) {
+          panel.classList.remove("active");
+        }
+
+      }
+    );
+
+    const panel =
+      document.getElementById(id);
+
+    if (panel) {
+
+      panel.classList.add("active");
+
+      if (id === "leaderboardPanel") {
+        loadLeaderboard();
+      }
+
+      setTimeout(
+        () => {
+
+          panel.scrollIntoView({
+            behavior: "smooth",
+            block: "nearest"
+          });
+
+        },
+        50
+      );
+    }
+  }
+
+  document
+    .getElementById("dailyMenu")
+    .addEventListener(
+      "click",
+      () => openPanel("dailyPanel")
+    );
+
+  document
+    .getElementById("upgradeMenu")
+    .addEventListener(
+      "click",
+      () => openPanel("upgradePanel")
+    );
+
+  document
+    .getElementById("referralMenu")
+    .addEventListener(
+      "click",
+      () => openPanel("referralPanel")
+    );
+
+  document
+    .getElementById("leaderboardMenu")
+    .addEventListener(
+      "click",
+      () => openPanel("leaderboardPanel")
+    );
+
+  document
+    .getElementById("tasksMenu")
+    .addEventListener(
+      "click",
+      () => openPanel("tasksPanel")
+    );
+
+  document
+    .getElementById("walletMenu")
+    .addEventListener(
+      "click",
+      () => openPanel("walletPanel")
+    );
+
+  document
+    .getElementById("settingsMenu")
+    .addEventListener(
+      "click",
+      () => openPanel("settingsPanel")
+    );
+
+  document
+    .getElementById("helpMenu")
+    .addEventListener(
+      "click",
+      () => openPanel("helpPanel")
+    );
+
+  document
+    .getElementById("profileButton")
+    .addEventListener(
+      "click",
+      () => openPanel("profilePanel")
+    );
+
+  document
+    .getElementById("closeProfile")
+    .addEventListener(
+      "click",
+      function () {
+
+        document
+          .getElementById("profilePanel")
+          .classList.remove("active");
+
+      }
+    );
+
+  document
+    .getElementById("connectWallet")
+    .addEventListener(
+      "click",
+      function () {
+
+        alert(
+          "Wallet connection will be added later."
+        );
+
+      }
+    );
+
+  /* TELEGRAM USER */
+
+  function loadTelegramUser() {
+
+    if (
+      !tg ||
+      !tg.initDataUnsafe ||
+      !tg.initDataUnsafe.user
+    ) {
+
+      document.getElementById(
+        "profileName"
+      ).textContent =
+        "Guest User";
+
+      document.getElementById(
+        "profileUsername"
+      ).textContent =
+        "Telegram unavailable";
+
+      document.getElementById(
+        "telegramUserId"
+      ).textContent =
+        "Not available";
+
+      return;
+    }
+
+    const user =
+      tg.initDataUnsafe.user;
+
+    const firstName =
+      user.first_name || "User";
+
+    const username =
+      user.username
+        ? "@" + user.username
+        : "No username";
+
+    document.getElementById(
+      "profileName"
+    ).textContent =
+      firstName;
+
+    document.getElementById(
+      "profileUsername"
+    ).textContent =
+      username;
+
+    document.getElementById(
+      "telegramUserId"
+    ).textContent =
+      String(user.id);
+
+    const parameter =
+      tg.initDataUnsafe.start_param;
+
+    document.getElementById(
+      "startParameter"
+    ).textContent =
+      parameter || "None";
+
+    const letter =
+      firstName
+        .charAt(0)
+        .toUpperCase();
+
+    document.getElementById(
+      "profileLetter"
+    ).textContent =
+      letter;
+
+    document.getElementById(
+      "profileBigLetter"
+    ).textContent =
+      letter;
+
+    if (user.photo_url) {
+
+      const profileImage =
+        document.getElementById(
+          "profileImage"
+        );
+
+      const profileBigImage =
+        document.getElementById(
+          "profileBigImage"
+        );
+
+      profileImage.src =
+        user.photo_url;
+
+      profileBigImage.src =
+        user.photo_url;
+
+      profileImage.style.display =
+        "block";
+
+      profileBigImage.style.display =
+        "block";
+
+      document.getElementById(
+        "profileLetter"
+      ).style.display =
+        "none";
+
+      document.getElementById(
+        "profileBigLetter"
+      ).style.display =
+        "none";
+    }
+  }
+
+  loadTelegramUser();
+  createReferralLink();
+  updateUI();
+
+  initializeQIVO();
+
+</script>
+
+</body>
+</html>
