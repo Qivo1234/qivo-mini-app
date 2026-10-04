@@ -1070,7 +1070,7 @@
   /* QIVO API */
 
   async function callAPI(action) {
-
+alert("initData length: " + (tg.initData ? tg.initData.length : 0));
     if (!tg || !tg.initData) {
       throw new Error("Telegram session not available");
     }
