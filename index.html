@@ -413,6 +413,30 @@
       opacity: .5;
     }
 
+    .upgrade-cost {
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 12px;
+      background: rgba(117,103,255,.09);
+      border: 1px solid rgba(117,103,255,.13);
+      text-align: center;
+      font-size: 11px;
+      opacity: .75;
+    }
+
+    .upgrade-cost strong {
+      color: #ffffff;
+      font-size: 14px;
+    }
+
+    .upgrade-status {
+      margin-top: 10px;
+      text-align: center;
+      font-size: 10px;
+      opacity: .55;
+      min-height: 15px;
+    }
+
     .task-item {
       width: 100%;
       padding: 14px;
@@ -801,9 +825,19 @@
       Increase your Tap Power and earn more QIVO points with every tap.
     </div>
 
+    <div class="upgrade-cost">
+      Upgrade cost:
+      <strong id="upgradeCost">100</strong>
+      QIVO Points
+    </div>
+
     <button id="upgradeButton" class="daily-reward-button" type="button" style="margin-top:14px;">
-      Upgrade
+      Upgrade to Power 2
     </button>
+
+    <div id="upgradeStatus" class="upgrade-status">
+      Higher Tap Power means more points per tap.
+    </div>
 
   </section>
 
@@ -1030,6 +1064,7 @@
   let activeTapRequests = 0;
   let refreshInProgress = false;
   let dailyClaimInProgress = false;
+  let upgradeInProgress = false;
 
 
   const balanceElement =
@@ -1058,6 +1093,12 @@
 
   const upgradeButton =
     document.getElementById("upgradeButton");
+
+  const upgradeCostElement =
+    document.getElementById("upgradeCost");
+
+  const upgradeStatus =
+    document.getElementById("upgradeStatus");
 
   const tapButton =
     document.getElementById("tapButton");
@@ -1098,6 +1139,7 @@
 
     updateTapButton();
     updateDailyUI();
+    updateUpgradeUI();
     updateTaskUI();
   }
 
@@ -1839,13 +1881,167 @@
 
   /* UPGRADE */
 
+  function updateUpgradeUI() {
+
+    const currentPower =
+      Math.max(
+        1,
+        Number(tapPower) || 1
+      );
+
+    const upgradeCost =
+      currentPower * 100;
+
+    const nextPower =
+      currentPower + 1;
+
+    upgradeCostElement.textContent =
+      upgradeCost.toLocaleString("en-US");
+
+    upgradeButton.textContent =
+      "Upgrade to Power " +
+      nextPower;
+
+    if (
+      !backendReady ||
+      upgradeInProgress
+    ) {
+
+      upgradeButton.disabled =
+        true;
+
+      upgradeButton.style.opacity =
+        "0.5";
+
+      return;
+    }
+
+    if (balance < upgradeCost) {
+
+      upgradeButton.disabled =
+        true;
+
+      upgradeButton.style.opacity =
+        "0.5";
+
+    } else {
+
+      upgradeButton.disabled =
+        false;
+
+      upgradeButton.style.opacity =
+        "1";
+
+    }
+  }
+
+
   upgradeButton.addEventListener(
     "click",
-    function () {
+    async function () {
 
-      alert(
-        "Upgrade will be connected to the secure backend next."
-      );
+      if (
+        !backendReady ||
+        upgradeInProgress
+      ) {
+        return;
+      }
+
+      const currentPower =
+        Math.max(
+          1,
+          Number(tapPower) || 1
+        );
+
+      const upgradeCost =
+        currentPower * 100;
+
+      if (balance < upgradeCost) {
+
+        upgradeStatus.textContent =
+          "Insufficient balance.";
+
+        updateUpgradeUI();
+
+        return;
+      }
+
+      upgradeInProgress = true;
+
+      upgradeButton.disabled = true;
+      upgradeButton.style.opacity = "0.5";
+      upgradeButton.textContent =
+        "Upgrading...";
+
+      upgradeStatus.textContent =
+        "Processing upgrade...";
+
+      try {
+
+        const data =
+          await callAPI("upgrade");
+
+        if (
+          data &&
+          data.success === true
+        ) {
+
+          if (
+            data.balance !== undefined
+          ) {
+
+            balance =
+              Number(data.balance) || 0;
+
+          }
+
+          if (
+            data.tap_power !== undefined
+          ) {
+
+            tapPower =
+              Number(data.tap_power) || 1;
+
+          }
+
+          updateUI();
+
+          upgradeStatus.textContent =
+            "Upgrade successful! Tap Power is now " +
+            tapPower +
+            ".";
+
+        } else {
+
+          upgradeStatus.textContent =
+            (
+              data?.error ||
+              "Upgrade failed."
+            );
+
+          await refreshServerState();
+
+        }
+
+      } catch (error) {
+
+        console.error(
+          "Upgrade error:",
+          error
+        );
+
+        upgradeStatus.textContent =
+          "Unable to complete upgrade.";
+
+        await refreshServerState();
+
+      } finally {
+
+        upgradeInProgress = false;
+
+        updateUpgradeUI();
+
+      }
 
     }
   );
@@ -2107,6 +2303,10 @@
 
       if (id === "leaderboardPanel") {
         loadLeaderboard();
+      }
+
+      if (id === "upgradePanel") {
+        updateUpgradeUI();
       }
 
       setTimeout(
