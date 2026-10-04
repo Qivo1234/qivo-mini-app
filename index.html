@@ -40,8 +40,6 @@
       overflow-x: hidden;
     }
 
-    /* HEADER */
-
     .header {
       width: 100%;
       display: flex;
@@ -102,8 +100,6 @@
       letter-spacing: 1px;
     }
 
-    /* PROFILE */
-
     .profile-button {
       width: 42px;
       height: 42px;
@@ -129,8 +125,6 @@
       font-size: 17px;
       font-weight: 800;
     }
-
-    /* BALANCE */
 
     .balance-card {
       width: 100%;
@@ -165,8 +159,6 @@
       font-size: 11px;
       opacity: 0.42;
     }
-
-    /* TAP */
 
     .tap-area {
       width: 100%;
@@ -209,8 +201,6 @@
       transform: scale(.92);
     }
 
-    /* STATS */
-
     .stats {
       width: 100%;
       display: grid;
@@ -239,8 +229,6 @@
       font-size: 19px;
       font-weight: 800;
     }
-
-    /* ENERGY */
 
     .energy-section {
       width: 100%;
@@ -274,8 +262,6 @@
       border-radius: 20px;
       transition: width .2s ease;
     }
-
-    /* MAIN MENU */
 
     .menu-grid {
       width: 100%;
@@ -327,8 +313,6 @@
       opacity: .4;
     }
 
-    /* PANELS */
-
     .panel {
       display: none;
       width: 100%;
@@ -354,8 +338,6 @@
       line-height: 1.7;
       opacity: .62;
     }
-
-    /* REFERRAL */
 
     .referral-link {
       width: 100%;
@@ -385,8 +367,6 @@
       font-size: 11px;
       opacity: .55;
     }
-
-    /* DAILY */
 
     .daily-progress {
       display: grid;
@@ -420,7 +400,64 @@
       cursor: pointer;
     }
 
-    /* LEADERBOARD */
+    /* TASKS */
+
+    .task-item {
+      width: 100%;
+      padding: 14px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.055);
+      border: 1px solid rgba(255,255,255,.08);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .task-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 13px;
+      background: rgba(117,103,255,.16);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .task-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .task-title {
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .task-reward {
+      margin-top: 4px;
+      font-size: 10px;
+      color: rgba(255,255,255,.55);
+    }
+
+    .task-button {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 13px;
+      background: #7567ff;
+      color: white;
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .task-button.completed {
+      background: rgba(255,255,255,.10);
+      color: rgba(255,255,255,.45);
+      cursor: default;
+    }
 
     .leaderboard-row {
       display: flex;
@@ -451,8 +488,6 @@
       border-top: 1px solid rgba(255,255,255,.08);
       font-size: 12px;
     }
-
-    /* PROFILE PANEL */
 
     .profile-info {
       display: flex;
@@ -515,8 +550,6 @@
       font-weight: 700;
     }
 
-    /* WALLET */
-
     .wallet-box {
       padding: 16px;
       border-radius: 15px;
@@ -541,8 +574,6 @@
       font-weight: 800;
       cursor: pointer;
     }
-
-    /* CLOSE */
 
     .close-panel {
       width: 100%;
@@ -684,6 +715,14 @@
       </div>
     </button>
 
+    <button id="tasksMenu" class="menu-button" type="button">
+      <div class="menu-icon">✅</div>
+      <div>
+        <div class="menu-title">Tasks</div>
+        <div class="menu-small">Earn extra points</div>
+      </div>
+    </button>
+
     <button id="walletMenu" class="menu-button" type="button">
       <div class="menu-icon">💎</div>
       <div>
@@ -818,6 +857,40 @@
     <div class="my-rank">
       <span>Your Rank</span>
       <strong>#5</strong>
+    </div>
+
+  </section>
+
+  <!-- TASKS PANEL -->
+
+  <section id="tasksPanel" class="panel">
+
+    <div class="panel-title">
+      ✅ Tasks
+    </div>
+
+    <div class="task-item">
+
+      <div class="task-icon">
+        📢
+      </div>
+
+      <div class="task-info">
+
+        <div class="task-title">
+          Join Telegram Channel
+        </div>
+
+        <div class="task-reward">
+          +500 Points
+        </div>
+
+      </div>
+
+      <button id="joinChannelTask" class="task-button" type="button">
+        Join
+      </button>
+
     </div>
 
   </section>
@@ -980,6 +1053,9 @@
   let lastDailyReward =
     Number(localStorage.getItem("qivo_daily_reward")) || 0;
 
+  let taskCompleted =
+    localStorage.getItem("qivo_task_join_channel") === "true";
+
   const balanceElement =
     document.getElementById("balance");
 
@@ -1012,6 +1088,9 @@
 
   const tapButton =
     document.getElementById("tapButton");
+
+  const joinChannelTask =
+    document.getElementById("joinChannelTask");
 
   function saveData() {
 
@@ -1049,6 +1128,11 @@
       "qivo_daily_reward",
       lastDailyReward
     );
+
+    localStorage.setItem(
+      "qivo_task_join_channel",
+      taskCompleted
+    );
   }
 
   function updateUI() {
@@ -1077,6 +1161,7 @@
       ).toLocaleString("en-US");
 
     updateDailyUI();
+    updateTaskUI();
   }
 
   /* TAP */
@@ -1325,6 +1410,67 @@
       }
     );
 
+  /* TASKS */
+
+  function updateTaskUI() {
+
+    if (!joinChannelTask) {
+      return;
+    }
+
+    if (taskCompleted) {
+
+      joinChannelTask.textContent =
+        "Completed";
+
+      joinChannelTask.classList.add(
+        "completed"
+      );
+
+      joinChannelTask.disabled = true;
+
+    } else {
+
+      joinChannelTask.textContent =
+        "Join";
+
+      joinChannelTask.classList.remove(
+        "completed"
+      );
+
+      joinChannelTask.disabled = false;
+    }
+  }
+
+  joinChannelTask.addEventListener(
+    "click",
+    function () {
+
+      if (taskCompleted) {
+        return;
+      }
+
+      /*
+       * Channel link will be added later.
+       * The reward is currently available
+       * for testing only.
+       */
+
+      balance += 500;
+
+      taskCompleted = true;
+
+      saveData();
+      updateUI();
+
+      alert(
+        "✅ Task completed!\n" +
+        "+500 QIVO points added!"
+      );
+
+    }
+  );
+
   /* PANELS */
 
   const panels = [
@@ -1332,6 +1478,7 @@
     "upgradePanel",
     "referralPanel",
     "leaderboardPanel",
+    "tasksPanel",
     "walletPanel",
     "settingsPanel",
     "helpPanel",
@@ -1402,6 +1549,13 @@
     .addEventListener(
       "click",
       () => openPanel("leaderboardPanel")
+    );
+
+  document
+    .getElementById("tasksMenu")
+    .addEventListener(
+      "click",
+      () => openPanel("tasksPanel")
     );
 
   document
@@ -1520,8 +1674,6 @@
     ).textContent =
       parameter || "None";
 
-    /* PROFILE LETTER */
-
     const letter =
       firstName
         .charAt(0)
@@ -1536,8 +1688,6 @@
       "profileBigLetter"
     ).textContent =
       letter;
-
-    /* TELEGRAM PROFILE PHOTO */
 
     if (user.photo_url) {
 
