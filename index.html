@@ -228,6 +228,31 @@
       opacity: .45;
       text-transform: uppercase;
       letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+
+    .info-button {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,.35);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.75);
+      font-size: 10px;
+      font-weight: 900;
+      line-height: 14px;
+      padding: 0;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .info-button:active {
+      transform: scale(.9);
     }
 
     .stat-value {
@@ -628,6 +653,86 @@
       opacity: .3;
     }
 
+    /* INFO MODAL */
+
+    .info-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(0,0,0,.72);
+      backdrop-filter: blur(7px);
+      -webkit-backdrop-filter: blur(7px);
+    }
+
+    .info-modal.active {
+      display: flex;
+    }
+
+    .info-card {
+      width: 100%;
+      max-width: 360px;
+      padding: 20px;
+      border-radius: 22px;
+      background: #10172a;
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: 0 25px 80px rgba(0,0,0,.5);
+      animation: modalIn .18s ease;
+    }
+
+    @keyframes modalIn {
+      from {
+        transform: scale(.94);
+        opacity: 0;
+      }
+
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .info-card-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 17px;
+      font-weight: 900;
+      margin-bottom: 12px;
+    }
+
+    .info-close {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,.1);
+      background: rgba(255,255,255,.06);
+      color: white;
+      cursor: pointer;
+      font-size: 15px;
+    }
+
+    .info-card-text {
+      font-size: 12px;
+      line-height: 1.8;
+      color: rgba(255,255,255,.68);
+    }
+
+    .info-highlight {
+      margin-top: 13px;
+      padding: 12px;
+      border-radius: 13px;
+      background: rgba(117,103,255,.10);
+      border: 1px solid rgba(117,103,255,.15);
+      font-size: 11px;
+      line-height: 1.7;
+      color: rgba(255,255,255,.72);
+    }
+
     @media (max-width: 380px) {
       .tap-button {
         width: 170px;
@@ -692,13 +797,41 @@
   <section class="stats">
 
     <div class="stat-box">
-      <div class="stat-label">Level</div>
+
+      <div class="stat-label">
+        Level
+
+        <button
+          id="levelInfoButton"
+          class="info-button"
+          type="button"
+          aria-label="Level information"
+        >
+          ?
+        </button>
+      </div>
+
       <div id="level" class="stat-value">1</div>
+
     </div>
 
     <div class="stat-box">
-      <div class="stat-label">Tap Power</div>
+
+      <div class="stat-label">
+        Tap Power
+
+        <button
+          id="tapPowerInfoButton"
+          class="info-button"
+          type="button"
+          aria-label="Tap Power information"
+        >
+          ?
+        </button>
+      </div>
+
       <div id="tapPower" class="stat-value">1</div>
+
     </div>
 
   </section>
@@ -1019,6 +1152,48 @@
 
 </div>
 
+
+<!-- INFO MODAL -->
+
+<div id="infoModal" class="info-modal">
+
+  <div class="info-card">
+
+    <div class="info-card-title">
+
+      <span id="infoModalTitle">
+        QIVO
+      </span>
+
+      <button
+        id="infoModalClose"
+        class="info-close"
+        type="button"
+      >
+        ✕
+      </button>
+
+    </div>
+
+    <div
+      id="infoModalText"
+      class="info-card-text"
+    >
+      QIVO information.
+    </div>
+
+    <div
+      id="infoModalHighlight"
+      class="info-highlight"
+    >
+      QIVO
+    </div>
+
+  </div>
+
+</div>
+
+
 <script>
 
   const tg = window.Telegram?.WebApp;
@@ -1035,6 +1210,10 @@
   const ENERGY_PER_TAP = 1;
 
   const MAX_TAP_QUOTA = 1000;
+
+  const MAX_TAP_POWER = 100;
+
+  const MAX_LEVEL = 100;
 
   const DAILY_REWARDS = [
     100,
@@ -1112,6 +1291,21 @@
   const quotaTimer =
     document.getElementById("quotaTimer");
 
+  const infoModal =
+    document.getElementById("infoModal");
+
+  const infoModalTitle =
+    document.getElementById("infoModalTitle");
+
+  const infoModalText =
+    document.getElementById("infoModalText");
+
+  const infoModalHighlight =
+    document.getElementById("infoModalHighlight");
+
+  const infoModalClose =
+    document.getElementById("infoModalClose");
+
 
   function updateUI() {
 
@@ -1119,10 +1313,16 @@
       balance.toLocaleString("en-US");
 
     levelElement.textContent =
-      level;
+      Math.min(
+        MAX_LEVEL,
+        Math.max(1, level)
+      );
 
     tapPowerElement.textContent =
-      tapPower;
+      Math.min(
+        MAX_TAP_POWER,
+        Math.max(1, tapPower)
+      );
 
     referralCountElement.textContent =
       referralCount;
@@ -1164,6 +1364,100 @@
 
     }
   }
+
+
+  /* INFO MODAL */
+
+  function openInfoModal(type) {
+
+    if (type === "level") {
+
+      infoModalTitle.textContent =
+        "⭐ QIVO Level";
+
+      infoModalText.innerHTML =
+        "Your Level represents your progress in QIVO. " +
+        "It is based on your total earned QIVO points, not your current balance.";
+
+      infoModalHighlight.innerHTML =
+        "<strong>Level 1 → 2:</strong> 200,000 total earned points.<br><br>" +
+        "Each new level requires more total earned points. " +
+        "Levels can increase up to <strong>Level 100</strong>.";
+
+    } else {
+
+      infoModalTitle.textContent =
+        "⚡ Tap Power";
+
+      infoModalText.innerHTML =
+        "Tap Power determines how many QIVO points you earn from each successful tap.";
+
+      infoModalHighlight.innerHTML =
+        "<strong>Example:</strong> Tap Power 10 = +10 QIVO points per tap.<br><br>" +
+        "Upgrade cost = current Tap Power × 100.<br><br>" +
+        "Maximum Tap Power: <strong>100</strong>.";
+
+    }
+
+    infoModal.classList.add("active");
+  }
+
+
+  function closeInfoModal() {
+
+    infoModal.classList.remove("active");
+
+  }
+
+
+  document
+    .getElementById("levelInfoButton")
+    .addEventListener(
+      "click",
+      function(event) {
+
+        event.stopPropagation();
+
+        openInfoModal("level");
+
+      }
+    );
+
+
+  document
+    .getElementById("tapPowerInfoButton")
+    .addEventListener(
+      "click",
+      function(event) {
+
+        event.stopPropagation();
+
+        openInfoModal("tapPower");
+
+      }
+    );
+
+
+  infoModalClose.addEventListener(
+    "click",
+    closeInfoModal
+  );
+
+
+  infoModal.addEventListener(
+    "click",
+    function(event) {
+
+      if (
+        event.target === infoModal
+      ) {
+
+        closeInfoModal();
+
+      }
+
+    }
+  );
 
 
   /* QIVO API */
@@ -1318,8 +1612,26 @@
     level =
       Number(user.level) || 1;
 
+    level =
+      Math.max(
+        1,
+        Math.min(
+          MAX_LEVEL,
+          level
+        )
+      );
+
     tapPower =
       Number(user.tap_power) || 1;
+
+    tapPower =
+      Math.max(
+        1,
+        Math.min(
+          MAX_TAP_POWER,
+          tapPower
+        )
+      );
 
     referralCount =
       Number(user.referral_count) || 0;
@@ -1498,6 +1810,15 @@
               ) {
                 level =
                   Number(data.level) || 1;
+
+                level =
+                  Math.max(
+                    1,
+                    Math.min(
+                      MAX_LEVEL,
+                      level
+                    )
+                  );
               }
 
               if (
@@ -1505,6 +1826,15 @@
               ) {
                 tapPower =
                   Number(data.tap_power) || 1;
+
+                tapPower =
+                  Math.max(
+                    1,
+                    Math.min(
+                      MAX_TAP_POWER,
+                      tapPower
+                    )
+                  );
               }
 
               if (
@@ -1886,8 +2216,35 @@
     const currentPower =
       Math.max(
         1,
-        Number(tapPower) || 1
+        Math.min(
+          MAX_TAP_POWER,
+          Number(tapPower) || 1
+        )
       );
+
+    tapPower = currentPower;
+
+    if (
+      currentPower >= MAX_TAP_POWER
+    ) {
+
+      upgradeCostElement.textContent =
+        "—";
+
+      upgradeButton.textContent =
+        "MAX POWER REACHED";
+
+      upgradeButton.disabled =
+        true;
+
+      upgradeButton.style.opacity =
+        "0.45";
+
+      upgradeStatus.textContent =
+        "Tap Power has reached the maximum level of 100.";
+
+      return;
+    }
 
     const upgradeCost =
       currentPower * 100;
@@ -1950,8 +2307,20 @@
       const currentPower =
         Math.max(
           1,
-          Number(tapPower) || 1
+          Math.min(
+            MAX_TAP_POWER,
+            Number(tapPower) || 1
+          )
         );
+
+      if (
+        currentPower >= MAX_TAP_POWER
+      ) {
+
+        updateUpgradeUI();
+
+        return;
+      }
 
       const upgradeCost =
         currentPower * 100;
@@ -2002,14 +2371,34 @@
             tapPower =
               Number(data.tap_power) || 1;
 
+            tapPower =
+              Math.max(
+                1,
+                Math.min(
+                  MAX_TAP_POWER,
+                  tapPower
+                )
+              );
+
           }
 
           updateUI();
 
-          upgradeStatus.textContent =
-            "Upgrade successful! Tap Power is now " +
-            tapPower +
-            ".";
+          if (
+            tapPower >= MAX_TAP_POWER
+          ) {
+
+            upgradeStatus.textContent =
+              "Maximum Tap Power reached: 100.";
+
+          } else {
+
+            upgradeStatus.textContent =
+              "Upgrade successful! Tap Power is now " +
+              tapPower +
+              ".";
+
+          }
 
         } else {
 
