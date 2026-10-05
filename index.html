@@ -1240,7 +1240,11 @@
   let tapQuotaResetAt = 0;
 
   let backendReady = false;
+
   let activeTapRequests = 0;
+
+  let pendingTapCount = 0;
+
   let refreshInProgress = false;
   let dailyClaimInProgress = false;
   let upgradeInProgress = false;
@@ -1556,9 +1560,20 @@
 
   /* SERVER STATE */
 
-  async function refreshServerState() {
+  async function refreshServerState(force = false) {
 
     if (!backendReady) {
+      return;
+    }
+
+    /*
+      اگر TAP در حال پردازش است، پاسخ init نباید
+      عددهای محلی را عقب یا جلو کند.
+    */
+    if (
+      !force &&
+      activeTapRequests > 0
+    ) {
       return;
     }
 
@@ -1579,11 +1594,22 @@
         );
       }
 
-      applyServerUser(
-        data.user
-      );
+      /*
+        فقط وقتی TAP معلق نداریم،
+        وضعیت واقعی سرور را اعمال می‌کنیم.
+      */
+      if (
+        activeTapRequests === 0 ||
+        force
+      ) {
 
-      updateUI();
+        applyServerUser(
+          data.user
+        );
+
+        updateUI();
+
+      }
 
     } catch (error) {
 
@@ -1798,9 +1824,32 @@
         return;
       }
 
-      balance += tapPower;
+      /*
+        مقدار Tap Power همین TAP را نگه می‌داریم
+        تا اگر درخواست خطا خورد، فقط همان TAP
+        rollback شود.
+      */
+      const tapAmount =
+        Math.max(
+          1,
+          Number(tapPower) || 1
+        );
+
+
+      /*
+        نمایش فوری:
+
+        هر TAP:
+        + Tap Power
+        - 1 quota
+        - 1 energy
+      */
+      balance += tapAmount;
+
       energy -= ENERGY_PER_TAP;
+
       tapQuota -= 1;
+
 
       if (energy < 0) {
         energy = 0;
@@ -1810,10 +1859,21 @@
         tapQuota = 0;
       }
 
-      updateUI();
 
+      pendingTapCount++;
       activeTapRequests++;
 
+
+      /*
+        نمایش فوری عدد جدید
+      */
+      updateUI();
+
+
+      /*
+        درخواست بدون منتظر ماندن برای TAP قبلی
+        ارسال می‌شود.
+      */
       callAPI("tap")
         .then(
           function (data) {
@@ -1823,81 +1883,100 @@
               data.success === true
             ) {
 
-              if (
-                data.balance !== undefined
-              ) {
-                balance =
-                  Number(data.balance) || 0;
-              }
+              /*
+                خیلی مهم:
 
-              if (
-                data.energy !== undefined
-              ) {
-                energy =
-                  Number(data.energy);
+                اینجا balance / energy / quota
+                را از پاسخ سرور روی UI نمی‌نویسیم.
 
-                if (isNaN(energy)) {
-                  energy = 0;
-                }
-              }
+                دلیل:
+                پاسخ درخواست‌های سریع ممکن است
+                با ترتیب متفاوت برگردند.
+
+                عدد صفحه توسط TAPهای محلی
+                به ترتیب کلیک کاربر جلو می‌رود.
+              */
+
 
               if (
                 data.level !== undefined
               ) {
-                level =
-                  Number(data.level) || 1;
 
-                level =
-                  Math.max(
-                    1,
-                    Math.min(
-                      MAX_LEVEL,
-                      level
-                    )
-                  );
+                const serverLevel =
+                  Number(data.level);
+
+                if (
+                  !isNaN(serverLevel)
+                ) {
+
+                  level =
+                    Math.max(
+                      1,
+                      Math.min(
+                        MAX_LEVEL,
+                        serverLevel
+                      )
+                    );
+
+                }
+
               }
+
 
               if (
                 data.tap_power !== undefined
               ) {
-                tapPower =
-                  Number(data.tap_power) || 1;
 
-                tapPower =
-                  Math.max(
-                    1,
-                    Math.min(
-                      MAX_TAP_POWER,
-                      tapPower
-                    )
-                  );
-              }
+                const serverTapPower =
+                  Number(data.tap_power);
 
-              if (
-                data.tap_quota !== undefined
-              ) {
-                tapQuota =
-                  Number(data.tap_quota);
+                if (
+                  !isNaN(serverTapPower)
+                ) {
 
-                if (isNaN(tapQuota)) {
-                  tapQuota = 0;
+                  tapPower =
+                    Math.max(
+                      1,
+                      Math.min(
+                        MAX_TAP_POWER,
+                        serverTapPower
+                      )
+                    );
+
                 }
+
               }
 
-              if (
-                data.tap_quota_reset_at
-              ) {
-                tapQuotaResetAt =
-                  new Date(
-                    data.tap_quota_reset_at
-                  ).getTime();
-              }
 
               updateUI();
 
             } else {
 
-              refreshServerState();
+              /*
+                این TAP موفق نبوده است.
+                فقط اثر همین TAP را برمی‌گردانیم.
+              */
+              balance -= tapAmount;
+
+              energy += ENERGY_PER_TAP;
+
+              tapQuota += 1;
+
+
+              if (
+                energy > MAX_ENERGY
+              ) {
+                energy = MAX_ENERGY;
+              }
+
+              if (
+                tapQuota > MAX_TAP_QUOTA
+              ) {
+                tapQuota = MAX_TAP_QUOTA;
+              }
+
+
+              updateUI();
 
             }
 
@@ -1911,7 +1990,32 @@
               error
             );
 
-            refreshServerState();
+
+            /*
+              فقط همین TAP که خطا خورده
+              rollback می‌شود.
+            */
+            balance -= tapAmount;
+
+            energy += ENERGY_PER_TAP;
+
+            tapQuota += 1;
+
+
+            if (
+              energy > MAX_ENERGY
+            ) {
+              energy = MAX_ENERGY;
+            }
+
+            if (
+              tapQuota > MAX_TAP_QUOTA
+            ) {
+              tapQuota = MAX_TAP_QUOTA;
+            }
+
+
+            updateUI();
 
           }
         )
@@ -1920,10 +2024,35 @@
 
             activeTapRequests--;
 
+            pendingTapCount--;
+
+
             if (
               activeTapRequests < 0
             ) {
               activeTapRequests = 0;
+            }
+
+            if (
+              pendingTapCount < 0
+            ) {
+              pendingTapCount = 0;
+            }
+
+
+            /*
+              وقتی تمام TAPهای سریع تمام شدند،
+              فقط یک بار وضعیت واقعی سرور را
+              دریافت می‌کنیم.
+            */
+            if (
+              activeTapRequests === 0 &&
+              pendingTapCount === 0 &&
+              backendReady
+            ) {
+
+              refreshServerState();
+
             }
 
           }
@@ -1959,7 +2088,8 @@
 
       if (
         backendReady &&
-        !refreshInProgress
+        !refreshInProgress &&
+        activeTapRequests === 0
       ) {
 
         refreshServerState();
@@ -2970,7 +3100,8 @@
       if (
         document.visibilityState ===
         "visible" &&
-        backendReady
+        backendReady &&
+        activeTapRequests === 0
       ) {
 
         refreshServerState();
