@@ -203,8 +203,9 @@
     }
 
     .tap-button.disabled {
-      opacity: .35;
-      cursor: not-allowed;
+      opacity: 1;
+      cursor: pointer;
+      pointer-events: auto;
     }
 
     .stats {
@@ -1153,15 +1154,10 @@
      ================================================== */
 
   const MAX_ENERGY = 1000;
-
   const ENERGY_PER_TAP = 1;
-
   const MAX_TAP_QUOTA = 1000;
-
   const MAX_TAP_POWER = 100;
-
   const MAX_LEVEL = 100;
-
 
   const DAILY_REWARDS = [
     100,
@@ -1179,75 +1175,34 @@
      ================================================== */
 
   let balance = 0;
-
   let energy = MAX_ENERGY;
-
   let level = 1;
-
   let tapPower = 1;
-
   let referralCount = 0;
 
   let dailyDay = 1;
-
   let lastDailyReward = 0;
-
   let taskCompleted = false;
 
   let tapQuota = MAX_TAP_QUOTA;
-
   let tapQuotaResetAt = 0;
 
-
-  /*
-    مهم:
-
-    backendReady فقط برای مشخص شدن وضعیت
-    اتصال سرور است.
-
-    TAPها قبل از کامل شدن درخواست‌های قبلی
-    قفل نمی‌شوند.
-  */
-
   let backendReady = false;
-
   let initializing = false;
 
 
   /* ==================================================
-     TAP SYSTEM
+     TAP QUEUE
      ================================================== */
-
-  /*
-    تعداد TAPهایی که هنوز به سرور ارسال نشده‌اند.
-  */
 
   const tapQueue = [];
 
-
   let tapProcessorRunning = false;
-
-
-  /*
-    اگر هنگام شروع برنامه TAP زده شود،
-    بعد از آماده شدن backend پردازش می‌شود.
-  */
-
   let pendingBeforeBackend = 0;
-
-
-  /*
-    تعداد TAPهای موفقی که از آخرین sync
-    دریافت کرده‌ایم.
-  */
-
   let successfulTapsSinceSync = 0;
 
-
   let refreshInProgress = false;
-
   let dailyClaimInProgress = false;
-
   let upgradeInProgress = false;
 
 
@@ -1375,11 +1330,8 @@
 
 
     updateTapButton();
-
     updateDailyUI();
-
     updateUpgradeUI();
-
     updateTaskUI();
   }
 
@@ -1391,28 +1343,19 @@
   function updateTapButton() {
 
     /*
-      مهم‌ترین تغییر:
-
-      backendReady دیگر باعث قفل شدن
-      ظاهری دکمه نمی‌شود.
-
-      فقط انرژی و سهمیه می‌توانند
-      TAP را متوقف کنند.
+      TAP NEVER GETS LOCKED BY BACKEND
+      OR BY REQUEST PROCESSING.
     */
 
-    if (
-      tapQuota <= 0 ||
-      energy <= 0
-    ) {
+    tapButton.disabled = false;
 
-      tapButton.classList.add("disabled");
+    tapButton.classList.remove("disabled");
 
-    } else {
+    tapButton.style.pointerEvents = "auto";
 
-      tapButton.classList.remove("disabled");
+    tapButton.style.opacity = "1";
 
-    }
-
+    tapButton.style.cursor = "pointer";
   }
 
 
@@ -1448,7 +1391,6 @@
         "<strong>Example:</strong> Tap Power 10 = +10 QIVO points per tap.<br><br>" +
         "Upgrade cost = current Tap Power × 100.<br><br>" +
         "Maximum Tap Power: <strong>100</strong>.";
-
     }
 
     infoModal.classList.add("active");
@@ -1456,9 +1398,7 @@
 
 
   function closeInfoModal() {
-
     infoModal.classList.remove("active");
-
   }
 
 
@@ -1467,11 +1407,8 @@
     .addEventListener(
       "click",
       function(event) {
-
         event.stopPropagation();
-
         openInfoModal("level");
-
       }
     );
 
@@ -1481,11 +1418,8 @@
     .addEventListener(
       "click",
       function(event) {
-
         event.stopPropagation();
-
         openInfoModal("tapPower");
-
       }
     );
 
@@ -1500,12 +1434,8 @@
     "click",
     function(event) {
 
-      if (
-        event.target === infoModal
-      ) {
-
+      if (event.target === infoModal) {
         closeInfoModal();
-
       }
 
     }
@@ -1522,39 +1452,28 @@
   ) {
 
     if (!tg) {
-
       throw new Error(
         "Telegram WebApp is not available"
       );
-
     }
 
-
     if (!tg.initData) {
-
       throw new Error(
         "Telegram initData is empty"
       );
-
     }
-
 
     const requestBody = {
       action: action,
       initData: tg.initData
     };
 
-
     if (referralCode) {
-
       requestBody.referralCode =
         referralCode;
-
     }
 
-
     let response;
-
 
     try {
 
@@ -1569,9 +1488,7 @@
             },
 
             body:
-              JSON.stringify(
-                requestBody
-              )
+              JSON.stringify(requestBody)
           }
         );
 
@@ -1588,13 +1505,10 @@
 
     }
 
-
     const responseText =
       await response.text();
 
-
     let data;
-
 
     try {
 
@@ -1615,7 +1529,6 @@
 
     }
 
-
     if (!response.ok) {
 
       throw new Error(
@@ -1631,9 +1544,7 @@
 
     }
 
-
     return data;
-
   }
 
 
@@ -1650,14 +1561,9 @@
     energy =
       Number(user.energy);
 
-
     if (isNaN(energy)) {
-
-      energy =
-        MAX_ENERGY;
-
+      energy = MAX_ENERGY;
     }
-
 
     energy =
       Math.max(
@@ -1672,7 +1578,6 @@
     level =
       Number(user.level) || 1;
 
-
     level =
       Math.max(
         1,
@@ -1685,7 +1590,6 @@
 
     tapPower =
       Number(user.tap_power) || 1;
-
 
     tapPower =
       Math.max(
@@ -1704,20 +1608,15 @@
     dailyDay =
       Number(user.daily_day) || 1;
 
-
     if (
       dailyDay < 1 ||
       dailyDay > 7
     ) {
-
       dailyDay = 1;
-
     }
 
 
-    if (
-      user.daily_claimed_at
-    ) {
+    if (user.daily_claimed_at) {
 
       lastDailyReward =
         new Date(
@@ -1738,16 +1637,9 @@
     tapQuota =
       Number(user.tap_quota);
 
-
-    if (
-      isNaN(tapQuota)
-    ) {
-
-      tapQuota =
-        MAX_TAP_QUOTA;
-
+    if (isNaN(tapQuota)) {
+      tapQuota = MAX_TAP_QUOTA;
     }
-
 
     tapQuota =
       Math.max(
@@ -1759,9 +1651,7 @@
       );
 
 
-    if (
-      user.tap_quota_reset_at
-    ) {
+    if (user.tap_quota_reset_at) {
 
       tapQuotaResetAt =
         new Date(
@@ -1769,7 +1659,6 @@
         ).getTime();
 
     }
-
   }
 
 
@@ -1783,9 +1672,7 @@
       return;
     }
 
-
     initializing = true;
-
 
     try {
 
@@ -1811,7 +1698,6 @@
 
         const startParam =
           tg.initDataUnsafe.start_param;
-
 
         if (
           startParam.startsWith("ref_")
@@ -1850,9 +1736,8 @@
 
 
       /*
-        اگر قبل از آماده شدن backend
-        کاربر TAP زده باشد، آن‌ها را
-        به صف اضافه می‌کنیم.
+        TAPهایی که قبل از اتصال backend
+        زده شده بودند.
       */
 
       if (
@@ -1870,7 +1755,6 @@
         }
 
         pendingBeforeBackend = 0;
-
       }
 
 
@@ -1882,10 +1766,6 @@
       );
 
 
-      /*
-        پردازش TAPهای منتظر
-      */
-
       processTapQueue();
 
 
@@ -1896,30 +1776,15 @@
         error
       );
 
-
       backendReady = false;
 
-
-      /*
-        دکمه از نظر ظاهری قفل نمی‌شود.
-        اگر backend آماده نباشد، TAPها موقتاً
-        در pending می‌مانند.
-      */
-
       updateTapButton();
-
-
-      console.error(
-        "QIVO backend connection failed:",
-        error
-      );
 
     } finally {
 
       initializing = false;
 
     }
-
   }
 
 
@@ -1929,30 +1794,16 @@
 
   async function processTapQueue() {
 
-    if (
-      tapProcessorRunning
-    ) {
-
+    if (tapProcessorRunning) {
       return;
-
     }
 
-
-    if (
-      !backendReady
-    ) {
-
+    if (!backendReady) {
       return;
-
     }
 
-
-    if (
-      tapQueue.length === 0
-    ) {
-
+    if (tapQueue.length === 0) {
       return;
-
     }
 
 
@@ -1961,23 +1812,9 @@
 
     try {
 
-      /*
-        TAPها به ترتیب ارسال می‌شوند.
-
-        نکته مهم:
-        کلیک کاربر منتظر این while نمی‌ماند.
-
-        کاربر هرچقدر سریع بزند،
-        همه داخل tapQueue قرار می‌گیرند.
-      */
-
       while (
         tapQueue.length > 0
       ) {
-
-        /*
-          فقط یک TAP از صف را برمی‌داریم.
-        */
 
         tapQueue.shift();
 
@@ -1998,24 +1835,12 @@
               data
             );
 
-
-            /*
-              این TAP را دوباره ارسال نمی‌کنیم،
-              چون ممکن است سرور آن را ثبت کرده
-              ولی پاسخ مشکل داشته باشد.
-            */
-
             continue;
-
           }
 
 
           successfulTapsSinceSync++;
 
-
-          /*
-            Level
-          */
 
           if (
             data.level !== undefined
@@ -2023,7 +1848,6 @@
 
             const serverLevel =
               Number(data.level);
-
 
             if (
               !isNaN(serverLevel)
@@ -2037,15 +1861,9 @@
                     serverLevel
                   )
                 );
-
             }
-
           }
 
-
-          /*
-            Tap Power
-          */
 
           if (
             data.tap_power !== undefined
@@ -2054,10 +1872,8 @@
             const serverTapPower =
               Number(data.tap_power);
 
-
             if (
-              !isNaN(serverTapPower
-              )
+              !isNaN(serverTapPower)
             ) {
 
               tapPower =
@@ -2068,26 +1884,16 @@
                     serverTapPower
                   )
                 );
-
             }
-
           }
 
-
-          /*
-            فقط Level و Tap Power
-            از پاسخ TAP گرفته می‌شوند.
-
-            Balance / Energy / Quota
-            هرگز از پاسخ TAP جایگزین نمی‌شوند.
-          */
 
           levelElement.textContent =
             level;
 
-
           tapPowerElement.textContent =
             tapPower;
+
 
         } catch (error) {
 
@@ -2096,65 +1902,26 @@
             error
           );
 
-
-          /*
-            درخواست را دوباره نمی‌فرستیم
-            تا duplicate ایجاد نشود.
-          */
-
           continue;
-
         }
-
       }
+
 
     } finally {
 
       tapProcessorRunning = false;
 
-
-      /*
-        UI محلی همچنان دست نخورده می‌ماند.
-      */
-
       updateUI();
 
 
       /*
-        فقط وقتی واقعاً تمام TAPهای صف
-        پردازش شده‌اند، sync می‌کنیم.
+        مهم:
+        اینجا دیگر balance و quota را
+        با refresh ناگهانی عقب نمی‌بریم.
       */
 
-      if (
-        backendReady &&
-        tapQueue.length === 0 &&
-        pendingBeforeBackend === 0
-      ) {
+      successfulTapsSinceSync = 0;
 
-        /*
-          اگر هیچ TAP موفقی نداشتیم،
-          sync کردن ممکن است مقدار UI را
-          بی‌دلیل تغییر دهد.
-        */
-
-        if (
-          successfulTapsSinceSync > 0
-        ) {
-
-          successfulTapsSinceSync = 0;
-
-          await refreshServerState();
-
-        }
-
-      }
-
-
-      /*
-        اگر هنگام پایان processor،
-        TAP جدید وارد صف شده باشد،
-        دوباره processor را اجرا می‌کنیم.
-      */
 
       if (
         backendReady &&
@@ -2164,9 +1931,7 @@
         processTapQueue();
 
       }
-
     }
-
   }
 
 
@@ -2179,34 +1944,19 @@
     function() {
 
       /*
-        اگر سهمیه تمام شده
+        فقط در صورتی که واقعاً سهمیه
+        یا انرژی تمام شده باشد،
+        کلیک جدید انجام نمی‌شود.
       */
 
       if (
-        tapQuota <= 0
-      ) {
-
-        return;
-
-      }
-
-
-      /*
-        اگر انرژی تمام شده
-      */
-
-      if (
+        tapQuota <= 0 ||
         energy <= 0
       ) {
 
         return;
-
       }
 
-
-      /*
-        مقدار Tap Power همین لحظه.
-      */
 
       const tapAmount =
         Math.max(
@@ -2216,54 +1966,33 @@
 
 
       /*
-        ==================================================
-        LOCAL TAP
-        ==================================================
-
-        هر کلیک دقیقاً:
-
-        Balance + Tap Power
-        Energy - 1
-        Quota - 1
+        هر کلیک فوراً:
+        + Tap Power
+        - Energy 1
+        - Quota 1
       */
 
-      balance +=
-        tapAmount;
+      balance += tapAmount;
 
-
-      energy -=
-        ENERGY_PER_TAP;
-
+      energy -= ENERGY_PER_TAP;
 
       tapQuota -= 1;
 
 
-      if (
-        energy < 0
-      ) {
-
+      if (energy < 0) {
         energy = 0;
-
       }
 
-
-      if (
-        tapQuota < 0
-      ) {
-
+      if (tapQuota < 0) {
         tapQuota = 0;
-
       }
 
 
       /*
-        اگر backend آماده است،
-        مستقیماً داخل صف.
+        TAP هیچ وقت قفل نمی‌شود.
       */
 
-      if (
-        backendReady
-      ) {
+      if (backendReady) {
 
         tapQueue.push(1);
 
@@ -2271,19 +2000,10 @@
 
       } else {
 
-        /*
-          backend هنوز آماده نیست.
-          TAP را از دست نمی‌دهیم.
-        */
-
         pendingBeforeBackend++;
 
       }
 
-
-      /*
-        نمایش فوری.
-      */
 
       updateUI();
 
@@ -2297,15 +2017,12 @@
 
   function updateQuotaTimer() {
 
-    if (
-      !tapQuotaResetAt
-    ) {
+    if (!tapQuotaResetAt) {
 
       quotaTimer.textContent =
         "Recharge in 08:00:00";
 
       return;
-
     }
 
 
@@ -2317,9 +2034,7 @@
       );
 
 
-    if (
-      remaining <= 0
-    ) {
+    if (remaining <= 0) {
 
       quotaTimer.textContent =
         "Recharge ready";
@@ -2336,9 +2051,7 @@
 
       }
 
-
       return;
-
     }
 
 
@@ -2371,7 +2084,6 @@
       String(minutes).padStart(2, "0") +
       ":" +
       String(seconds).padStart(2, "0");
-
   }
 
 
@@ -2387,16 +2099,8 @@
 
   async function refreshServerState() {
 
-    /*
-      هنگام TAP هیچ syncای انجام نمی‌شود.
-    */
-
-    if (
-      !backendReady
-    ) {
-
+    if (!backendReady) {
       return;
-
     }
 
 
@@ -2407,16 +2111,11 @@
     ) {
 
       return;
-
     }
 
 
-    if (
-      refreshInProgress
-    ) {
-
+    if (refreshInProgress) {
       return;
-
     }
 
 
@@ -2429,23 +2128,16 @@
         await callAPI("init");
 
 
-      if (
-        !data.user
-      ) {
-
+      if (!data.user) {
         throw new Error(
           "User data was not returned"
         );
-
       }
 
 
       /*
-        ممکن است در زمان دریافت پاسخ
-        TAP جدید زده شده باشد.
-
-        در این حالت پاسخ قدیمی را
-        روی UI اعمال نمی‌کنیم.
+        اگر وسط refresh کاربر TAP زده،
+        اطلاعات قدیمی را اعمال نکن.
       */
 
       if (
@@ -2455,7 +2147,6 @@
       ) {
 
         return;
-
       }
 
 
@@ -2465,6 +2156,7 @@
 
 
       updateUI();
+
 
     } catch (error) {
 
@@ -2478,7 +2170,6 @@
       refreshInProgress = false;
 
     }
-
   }
 
 
@@ -2499,33 +2190,25 @@
           "day" + i
         );
 
-
       if (!day) {
         continue;
       }
-
 
       day.classList.remove(
         "active"
       );
 
-
-      if (
-        i === dailyDay
-      ) {
+      if (i === dailyDay) {
 
         day.classList.add(
           "active"
         );
-
       }
-
     }
 
 
     const now =
       Date.now();
-
 
     const twentyFourHours =
       24 * 60 * 60 * 1000;
@@ -2550,9 +2233,7 @@
       ];
 
 
-    if (
-      canClaim
-    ) {
+    if (canClaim) {
 
       dailyButton.disabled =
         false;
@@ -2620,9 +2301,7 @@
         String(minutes).padStart(2, "0") +
         ":" +
         String(seconds).padStart(2, "0");
-
     }
-
   }
 
 
@@ -2636,7 +2315,6 @@
       ) {
 
         return;
-
       }
 
 
@@ -2650,7 +2328,6 @@
           "Please wait for your taps to finish.";
 
         return;
-
       }
 
 
@@ -2686,7 +2363,6 @@
 
             balance =
               Number(data.balance) || 0;
-
           }
 
 
@@ -2696,7 +2372,6 @@
 
             dailyDay =
               Number(data.daily_day) || 1;
-
           }
 
 
@@ -2708,7 +2383,6 @@
               new Date(
                 data.daily_claimed_at
               ).getTime();
-
           }
 
 
@@ -2730,10 +2404,9 @@
               "Unable to claim daily reward."
             );
 
-
           await refreshServerState();
-
         }
+
 
       } catch (error) {
 
@@ -2741,7 +2414,6 @@
           "Daily reward error:",
           error
         );
-
 
         dailyStatus.textContent =
           "Unable to claim daily reward.";
@@ -2752,9 +2424,7 @@
           false;
 
         updateDailyUI();
-
       }
-
     }
   );
 
@@ -2817,7 +2487,6 @@
         "Tap Power has reached the maximum level of 100.";
 
       return;
-
     }
 
 
@@ -2855,7 +2524,6 @@
         "0.5";
 
       return;
-
     }
 
 
@@ -2876,9 +2544,7 @@
 
       upgradeButton.style.opacity =
         "1";
-
     }
-
   }
 
 
@@ -2892,7 +2558,6 @@
       ) {
 
         return;
-
       }
 
 
@@ -2906,7 +2571,6 @@
           "Please wait for your taps to finish.";
 
         return;
-
       }
 
 
@@ -2928,7 +2592,6 @@
         updateUpgradeUI();
 
         return;
-
       }
 
 
@@ -2946,7 +2609,6 @@
         updateUpgradeUI();
 
         return;
-
       }
 
 
@@ -2986,7 +2648,6 @@
 
             balance =
               Number(data.balance) || 0;
-
           }
 
 
@@ -2997,7 +2658,6 @@
             tapPower =
               Number(data.tap_power) || 1;
 
-
             tapPower =
               Math.max(
                 1,
@@ -3006,7 +2666,6 @@
                   tapPower
                 )
               );
-
           }
 
 
@@ -3027,7 +2686,6 @@
               "Upgrade successful! Tap Power is now " +
               tapPower +
               ".";
-
           }
 
         } else {
@@ -3038,10 +2696,9 @@
               "Upgrade failed."
             );
 
-
           await refreshServerState();
-
         }
+
 
       } catch (error) {
 
@@ -3049,7 +2706,6 @@
           "Upgrade error:",
           error
         );
-
 
         upgradeStatus.textContent =
           "Unable to complete upgrade.";
@@ -3060,9 +2716,7 @@
           false;
 
         updateUpgradeUI();
-
       }
-
     }
   );
 
@@ -3085,7 +2739,6 @@
 
       userId =
         tg.initDataUnsafe.user.id;
-
     }
 
 
@@ -3096,7 +2749,6 @@
 
     referralLinkElement.textContent =
       link;
-
   }
 
 
@@ -3131,14 +2783,13 @@
             1500
           );
 
+
         } catch (error) {
 
           alert(
             "Copy failed. Please copy the link manually."
           );
-
         }
-
       }
     );
 
@@ -3154,9 +2805,7 @@
     }
 
 
-    if (
-      taskCompleted
-    ) {
+    if (taskCompleted) {
 
       joinChannelTask.textContent =
         "Completed";
@@ -3179,9 +2828,7 @@
 
       joinChannelTask.disabled =
         false;
-
     }
-
   }
 
 
@@ -3221,15 +2868,12 @@
         data.leaderboard || [];
 
 
-      if (
-        !rows.length
-      ) {
+      if (!rows.length) {
 
         container.innerHTML =
           "No players yet.";
 
         return;
-
       }
 
 
@@ -3295,7 +2939,6 @@
             myPosition =
               "#" +
               (index + 1);
-
           }
 
         }
@@ -3318,35 +2961,18 @@
 
       container.textContent =
         "Unable to load leaderboard.";
-
     }
-
   }
 
 
   function escapeHTML(value) {
 
     return String(value)
-      .replaceAll(
-        "&",
-        "&amp;"
-      )
-      .replaceAll(
-        "<",
-        "&lt;"
-      )
-      .replaceAll(
-        ">",
-        "&gt;"
-      )
-      .replaceAll(
-        '"',
-        "&quot;"
-      )
-      .replaceAll(
-        "'",
-        "&#039;"
-      );
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
 
   }
 
@@ -3435,9 +3061,7 @@
         },
         50
       );
-
     }
-
   }
 
 
@@ -3446,9 +3070,7 @@
     .addEventListener(
       "click",
       () =>
-        openPanel(
-          "dailyPanel"
-        )
+        openPanel("dailyPanel")
     );
 
 
@@ -3457,9 +3079,7 @@
     .addEventListener(
       "click",
       () =>
-        openPanel(
-          "upgradePanel"
-        )
+        openPanel("upgradePanel")
     );
 
 
@@ -3468,9 +3088,7 @@
     .addEventListener(
       "click",
       () =>
-        openPanel(
-          "referralPanel"
-        )
+        openPanel("referralPanel")
     );
 
 
@@ -3479,9 +3097,7 @@
     .addEventListener(
       "click",
       () =>
-        openPanel(
-          "leaderboardPanel"
-        )
+        openPanel("leaderboardPanel")
     );
 
 
@@ -3490,9 +3106,7 @@
     .addEventListener(
       "click",
       () =>
-        openPanel(
-          "tasksPanel"
-        )
+        openPanel("tasksPanel")
     );
 
 
@@ -3501,9 +3115,7 @@
     .addEventListener(
       "click",
       () =>
-        openPanel(
-          "walletPanel"
-        )
+        openPanel("walletPanel")
     );
 
 
@@ -3512,9 +3124,7 @@
     .addEventListener(
       "click",
       () =>
-        openPanel(
-          "settingsPanel"
-        )
+        openPanel("settingsPanel")
     );
 
 
@@ -3523,9 +3133,7 @@
     .addEventListener(
       "click",
       () =>
-        openPanel(
-          "helpPanel"
-        )
+        openPanel("helpPanel")
     );
 
 
@@ -3534,9 +3142,7 @@
     .addEventListener(
       "click",
       () =>
-        openPanel(
-          "profilePanel"
-        )
+        openPanel("profilePanel")
     );
 
 
@@ -3547,12 +3153,8 @@
       function() {
 
         document
-          .getElementById(
-            "profilePanel"
-          )
-          .classList.remove(
-            "active"
-          );
+          .getElementById("profilePanel")
+          .classList.remove("active");
 
       }
     );
@@ -3603,7 +3205,6 @@
 
 
       return;
-
     }
 
 
@@ -3711,9 +3312,7 @@
         "profileBigLetter"
       ).style.display =
         "none";
-
     }
-
   }
 
 
@@ -3731,14 +3330,8 @@
       ) {
 
         return;
-
       }
 
-
-      /*
-        تا وقتی TAP در حال پردازش است
-        refresh انجام نمی‌شود.
-      */
 
       if (
         backendReady &&
@@ -3750,7 +3343,6 @@
         refreshServerState();
 
       }
-
     }
   );
 
