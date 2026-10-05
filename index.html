@@ -653,8 +653,6 @@
       opacity: .3;
     }
 
-    /* INFO MODAL */
-
     .info-modal {
       position: fixed;
       inset: 0;
@@ -927,7 +925,6 @@
     </div>
 
     <div class="daily-progress">
-
       <div id="day1" class="day">DAY 1<br>100</div>
       <div id="day2" class="day">DAY 2<br>200</div>
       <div id="day3" class="day">DAY 3<br>300</div>
@@ -935,7 +932,6 @@
       <div id="day5" class="day">DAY 5<br>500</div>
       <div id="day6" class="day">DAY 6<br>600</div>
       <div id="day7" class="day">DAY 7<br>700</div>
-
     </div>
 
     <button id="dailyButton" class="daily-reward-button" type="button">
@@ -1153,8 +1149,6 @@
 </div>
 
 
-<!-- INFO MODAL -->
-
 <div id="infoModal" class="info-modal">
 
   <div class="info-card">
@@ -1241,9 +1235,17 @@
 
   let backendReady = false;
 
-  let activeTapRequests = 0;
 
-  let pendingTapCount = 0;
+  /*
+    TAP QUEUE
+
+    هر کلیک وارد صف می‌شود.
+    فقط یک درخواست TAP در هر لحظه به سرور
+    ارسال می‌شود تا پاسخ‌ها جابه‌جا نشوند.
+  */
+  let tapQueue = [];
+  let tapQueueProcessing = false;
+
 
   let refreshInProgress = false;
   let dailyClaimInProgress = false;
@@ -1566,16 +1568,22 @@
       return;
     }
 
+
     /*
-      اگر TAP در حال پردازش است، پاسخ init نباید
-      عددهای محلی را عقب یا جلو کند.
+      اگر حتی یک TAP در صف باشد یا در حال
+      پردازش باشد، Refresh نباید وضعیت محلی
+      را تغییر دهد.
     */
     if (
       !force &&
-      activeTapRequests > 0
+      (
+        tapQueueProcessing ||
+        tapQueue.length > 0
+      )
     ) {
       return;
     }
+
 
     if (refreshInProgress) {
       return;
@@ -1594,22 +1602,23 @@
         );
       }
 
+
       /*
-        فقط وقتی TAP معلق نداریم،
-        وضعیت واقعی سرور را اعمال می‌کنیم.
+        فقط وقتی صف TAP کاملاً خالی است
+        وضعیت سرور روی صفحه اعمال می‌شود.
       */
       if (
-        activeTapRequests === 0 ||
-        force
+        tapQueueProcessing ||
+        tapQueue.length > 0
       ) {
-
-        applyServerUser(
-          data.user
-        );
-
-        updateUI();
-
+        return;
       }
+
+      applyServerUser(
+        data.user
+      );
+
+      updateUI();
 
     } catch (error) {
 
@@ -1806,7 +1815,180 @@
   }
 
 
-  /* FAST TAP */
+  /* =========================
+     FAST TAP QUEUE
+  ========================= */
+
+
+  async function processTapQueue() {
+
+    if (
+      tapQueueProcessing ||
+      !backendReady
+    ) {
+      return;
+    }
+
+
+    tapQueueProcessing = true;
+
+
+    try {
+
+      while (
+        tapQueue.length > 0
+      ) {
+
+        /*
+          فقط یک TAP را از صف برمی‌داریم.
+        */
+        tapQueue.shift();
+
+
+        try {
+
+          const data =
+            await callAPI("tap");
+
+
+          /*
+            خیلی مهم:
+
+            اینجا balance / energy / quota
+            را از پاسخ سرور روی صفحه نمی‌نویسیم.
+
+            چون صفحه قبلاً به صورت فوری
+            با هر کلیک به‌روزرسانی شده است.
+
+            این کار جلوی پرش اعداد را می‌گیرد.
+          */
+
+          if (
+            data &&
+            data.success === true
+          ) {
+
+            /*
+              Level و Tap Power را فقط در صورت
+              دریافت معتبر به‌روزرسانی می‌کنیم.
+            */
+
+            if (
+              data.level !== undefined
+            ) {
+
+              const serverLevel =
+                Number(data.level);
+
+              if (
+                !isNaN(serverLevel)
+              ) {
+
+                level =
+                  Math.max(
+                    1,
+                    Math.min(
+                      MAX_LEVEL,
+                      serverLevel
+                    )
+                  );
+
+              }
+
+            }
+
+
+            if (
+              data.tap_power !== undefined
+            ) {
+
+              const serverTapPower =
+                Number(data.tap_power);
+
+              if (
+                !isNaN(serverTapPower)
+              ) {
+
+                tapPower =
+                  Math.max(
+                    1,
+                    Math.min(
+                      MAX_TAP_POWER,
+                      serverTapPower
+                    )
+                  );
+
+              }
+
+            }
+
+
+          } else {
+
+            /*
+              اگر سرور این TAP را قبول نکرد،
+              صف باقی‌مانده را متوقف می‌کنیم.
+
+              سپس Refresh نهایی وضعیت واقعی
+              را مشخص می‌کند.
+            */
+
+            console.error(
+              "QIVO tap rejected:",
+              data
+            );
+
+            tapQueue.length = 0;
+
+            break;
+          }
+
+
+        } catch (error) {
+
+          /*
+            در خطای شبکه، TAPهای باقی‌مانده
+            دوباره خودکار ارسال نمی‌شوند تا
+            احتمال ثبت دوباره یک TAP وجود نداشته باشد.
+          */
+
+          console.error(
+            "QIVO tap error:",
+            error
+          );
+
+          tapQueue.length = 0;
+
+          break;
+        }
+
+      }
+
+    } finally {
+
+      tapQueueProcessing = false;
+
+      updateUI();
+
+
+      /*
+        بعد از تمام شدن کامل TAPها،
+        فقط یک بار وضعیت واقعی سرور
+        گرفته می‌شود.
+      */
+
+      if (
+        backendReady &&
+        tapQueue.length === 0
+      ) {
+
+        await refreshServerState();
+
+      }
+
+    }
+  }
+
 
   tapButton.addEventListener(
     "click",
@@ -1824,10 +2006,9 @@
         return;
       }
 
+
       /*
-        مقدار Tap Power همین TAP را نگه می‌داریم
-        تا اگر درخواست خطا خورد، فقط همان TAP
-        rollback شود.
+        مقدار Tap Power همین کلیک.
       */
       const tapAmount =
         Math.max(
@@ -1837,13 +2018,19 @@
 
 
       /*
-        نمایش فوری:
+        =========================
+        OPTIMISTIC LOCAL UPDATE
+        =========================
 
-        هر TAP:
+        هر کلیک دقیقاً:
         + Tap Power
         - 1 quota
         - 1 energy
+
+        این قسمت بلافاصله اجرا می‌شود
+        و منتظر سرور نمی‌ماند.
       */
+
       balance += tapAmount;
 
       energy -= ENERGY_PER_TAP;
@@ -1860,203 +2047,24 @@
       }
 
 
-      pendingTapCount++;
-      activeTapRequests++;
+      /*
+        TAP را وارد صف می‌کنیم.
+      */
+      tapQueue.push(1);
 
 
       /*
-        نمایش فوری عدد جدید
+        نمایش فوری.
       */
       updateUI();
 
 
       /*
-        درخواست بدون منتظر ماندن برای TAP قبلی
-        ارسال می‌شود.
+        پردازش صف.
+        اگر قبلاً در حال پردازش باشد،
+        همین TAP در صف می‌ماند.
       */
-      callAPI("tap")
-        .then(
-          function (data) {
-
-            if (
-              data &&
-              data.success === true
-            ) {
-
-              /*
-                خیلی مهم:
-
-                اینجا balance / energy / quota
-                را از پاسخ سرور روی UI نمی‌نویسیم.
-
-                دلیل:
-                پاسخ درخواست‌های سریع ممکن است
-                با ترتیب متفاوت برگردند.
-
-                عدد صفحه توسط TAPهای محلی
-                به ترتیب کلیک کاربر جلو می‌رود.
-              */
-
-
-              if (
-                data.level !== undefined
-              ) {
-
-                const serverLevel =
-                  Number(data.level);
-
-                if (
-                  !isNaN(serverLevel)
-                ) {
-
-                  level =
-                    Math.max(
-                      1,
-                      Math.min(
-                        MAX_LEVEL,
-                        serverLevel
-                      )
-                    );
-
-                }
-
-              }
-
-
-              if (
-                data.tap_power !== undefined
-              ) {
-
-                const serverTapPower =
-                  Number(data.tap_power);
-
-                if (
-                  !isNaN(serverTapPower)
-                ) {
-
-                  tapPower =
-                    Math.max(
-                      1,
-                      Math.min(
-                        MAX_TAP_POWER,
-                        serverTapPower
-                      )
-                    );
-
-                }
-
-              }
-
-
-              updateUI();
-
-            } else {
-
-              /*
-                این TAP موفق نبوده است.
-                فقط اثر همین TAP را برمی‌گردانیم.
-              */
-              balance -= tapAmount;
-
-              energy += ENERGY_PER_TAP;
-
-              tapQuota += 1;
-
-
-              if (
-                energy > MAX_ENERGY
-              ) {
-                energy = MAX_ENERGY;
-              }
-
-              if (
-                tapQuota > MAX_TAP_QUOTA
-              ) {
-                tapQuota = MAX_TAP_QUOTA;
-              }
-
-
-              updateUI();
-
-            }
-
-          }
-        )
-        .catch(
-          function (error) {
-
-            console.error(
-              "QIVO tap error:",
-              error
-            );
-
-
-            /*
-              فقط همین TAP که خطا خورده
-              rollback می‌شود.
-            */
-            balance -= tapAmount;
-
-            energy += ENERGY_PER_TAP;
-
-            tapQuota += 1;
-
-
-            if (
-              energy > MAX_ENERGY
-            ) {
-              energy = MAX_ENERGY;
-            }
-
-            if (
-              tapQuota > MAX_TAP_QUOTA
-            ) {
-              tapQuota = MAX_TAP_QUOTA;
-            }
-
-
-            updateUI();
-
-          }
-        )
-        .finally(
-          function () {
-
-            activeTapRequests--;
-
-            pendingTapCount--;
-
-
-            if (
-              activeTapRequests < 0
-            ) {
-              activeTapRequests = 0;
-            }
-
-            if (
-              pendingTapCount < 0
-            ) {
-              pendingTapCount = 0;
-            }
-
-
-            /*
-              وقتی تمام TAPهای سریع تمام شدند،
-              فقط یک بار وضعیت واقعی سرور را
-              دریافت می‌کنیم.
-            */
-            if (
-              activeTapRequests === 0 &&
-              pendingTapCount === 0 &&
-              backendReady
-            ) {
-
-              refreshServerState();
-
-            }
-
-          }
-        );
+      processTapQueue();
 
     }
   );
@@ -2086,10 +2094,12 @@
       quotaTimer.textContent =
         "Recharge ready";
 
+
       if (
         backendReady &&
         !refreshInProgress &&
-        activeTapRequests === 0
+        !tapQueueProcessing &&
+        tapQueue.length === 0
       ) {
 
         refreshServerState();
@@ -2425,9 +2435,16 @@
       "Upgrade to Power " +
       nextPower;
 
+
+    /*
+      Upgrade تا وقتی TAPهای قبلی
+      در صف هستند انجام نمی‌شود.
+    */
     if (
       !backendReady ||
-      upgradeInProgress
+      upgradeInProgress ||
+      tapQueueProcessing ||
+      tapQueue.length > 0
     ) {
 
       upgradeButton.disabled =
@@ -2438,6 +2455,7 @@
 
       return;
     }
+
 
     if (balance < upgradeCost) {
 
@@ -2465,7 +2483,9 @@
 
       if (
         !backendReady ||
-        upgradeInProgress
+        upgradeInProgress ||
+        tapQueueProcessing ||
+        tapQueue.length > 0
       ) {
         return;
       }
@@ -3101,7 +3121,8 @@
         document.visibilityState ===
         "visible" &&
         backendReady &&
-        activeTapRequests === 0
+        !tapQueueProcessing &&
+        tapQueue.length === 0
       ) {
 
         refreshServerState();
