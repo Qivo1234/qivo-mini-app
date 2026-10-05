@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1199,7 +1200,12 @@
 
   let tapProcessorRunning = false;
   let pendingBeforeBackend = 0;
-  let successfulTapsSinceSync = 0;
+
+  /*
+    اگر حتی یک TAP در صف با خطا مواجه شود،
+    بعد از تمام شدن صف وضعیت واقعی از سرور گرفته می‌شود.
+  */
+  let tapSyncNeeded = false;
 
   let refreshInProgress = false;
   let dailyClaimInProgress = false;
@@ -1343,8 +1349,9 @@
   function updateTapButton() {
 
     /*
-      TAP NEVER GETS LOCKED BY BACKEND
-      OR BY REQUEST PROCESSING.
+      TAP در زمان پردازش درخواست‌ها قفل نمی‌شود.
+      فقط وقتی واقعاً quota یا energy صفر باشد،
+      کلیک جدید از داخل handler پذیرفته نمی‌شود.
     */
 
     tapButton.disabled = false;
@@ -1658,6 +1665,10 @@
           user.tap_quota_reset_at
         ).getTime();
 
+    } else {
+
+      tapQuotaResetAt = 0;
+
     }
   }
 
@@ -1816,6 +1827,11 @@
         tapQueue.length > 0
       ) {
 
+        /*
+          فقط یک TAP از صف را برمی‌داریم.
+          سپس تا جواب واقعی سرور صبر می‌کنیم.
+        */
+
         tapQueue.shift();
 
 
@@ -1835,12 +1851,21 @@
               data
             );
 
+            /*
+              این TAP در سرور ثبت نشده.
+              بعد از پایان صف وضعیت واقعی را می‌گیریم.
+            */
+
+            tapSyncNeeded = true;
+
             continue;
           }
 
 
-          successfulTapsSinceSync++;
-
+          /*
+            Level و Tap Power را از پاسخ واقعی سرور
+            می‌گیریم.
+          */
 
           if (
             data.level !== undefined
@@ -1888,11 +1913,17 @@
           }
 
 
-          levelElement.textContent =
-            level;
+          /*
+            تا وقتی TAP دیگری در صف وجود دارد،
+            balance و quota را از پاسخ سرور
+            روی مقدار نمایشی overwrite نمی‌کنیم.
 
-          tapPowerElement.textContent =
-            tapPower;
+            چون کاربر ممکن است مثلاً 50 بار
+            خیلی سریع کلیک کرده باشد و UI باید
+            همان 50 کلیک را شمرده‌شده نشان دهد.
+          */
+
+          updateUI();
 
 
         } catch (error) {
@@ -1901,6 +1932,13 @@
             "QIVO tap error:",
             error
           );
+
+          /*
+            TAP در این درخواست ناموفق بوده.
+            بعداً وضعیت واقعی سرور را sync می‌کنیم.
+          */
+
+          tapSyncNeeded = true;
 
           continue;
         }
@@ -1911,17 +1949,31 @@
 
       tapProcessorRunning = false;
 
-      updateUI();
+
+      /*
+        اگر هیچ خطایی در صف نبود،
+        مقدار optimistic فعلی باید با سرور
+        برابر باشد.
+
+        اما برای Level Reward و اطمینان از
+        موجودی نهایی، در پایان صف یک sync
+        انجام می‌دهیم.
+      */
+
+      if (
+        backendReady &&
+        tapQueue.length === 0 &&
+        pendingBeforeBackend === 0
+      ) {
+
+        await refreshServerState();
+      }
 
 
       /*
-        مهم:
-        اینجا دیگر balance و quota را
-        با refresh ناگهانی عقب نمی‌بریم.
+        اگر در حین پایان پردازش، TAP جدیدی
+        وارد صف شده باشد، دوباره پردازش کن.
       */
-
-      successfulTapsSinceSync = 0;
-
 
       if (
         backendReady &&
@@ -1929,7 +1981,6 @@
       ) {
 
         processTapQueue();
-
       }
     }
   }
@@ -1944,9 +1995,8 @@
     function() {
 
       /*
-        فقط در صورتی که واقعاً سهمیه
-        یا انرژی تمام شده باشد،
-        کلیک جدید انجام نمی‌شود.
+        این دو شرط تنها شرایط واقعی هستند
+        که TAP جدید نباید پذیرفته شود.
       */
 
       if (
@@ -1966,10 +2016,13 @@
 
 
       /*
-        هر کلیک فوراً:
+        ثبت فوری در UI:
+
         + Tap Power
         - Energy 1
         - Quota 1
+
+        درخواست واقعی هم در صف قرار می‌گیرد.
       */
 
       balance += tapAmount;
@@ -1989,7 +2042,7 @@
 
 
       /*
-        TAP هیچ وقت قفل نمی‌شود.
+        هر کلیک دقیقاً یک آیتم در صف.
       */
 
       if (backendReady) {
@@ -2001,9 +2054,12 @@
       } else {
 
         pendingBeforeBackend++;
-
       }
 
+
+      /*
+        UI بلافاصله بعد از هر کلیک تغییر می‌کند.
+      */
 
       updateUI();
 
@@ -2039,6 +2095,12 @@
       quotaTimer.textContent =
         "Recharge ready";
 
+
+      /*
+        اگر quota صفر شده باشد، برای reset واقعی
+        نیاز به هماهنگی backend داریم.
+        اینجا فقط state را refresh می‌کنیم.
+      */
 
       if (
         backendReady &&
@@ -2105,7 +2167,14 @@
 
 
     if (
-      tapProcessorRunning ||
+      tapProcessorRunning
+    ) {
+
+      return;
+    }
+
+
+    if (
       tapQueue.length > 0 ||
       pendingBeforeBackend > 0
     ) {
@@ -2153,6 +2222,9 @@
       applyServerUser(
         data.user
       );
+
+
+      tapSyncNeeded = false;
 
 
       updateUI();
@@ -3365,3 +3437,4 @@
 
 </body>
 </html>
+```
