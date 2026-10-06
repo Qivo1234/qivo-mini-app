@@ -1880,7 +1880,8 @@
   async function callAPI(
     action,
     referralCode = null,
-    requiredReferrals = null
+    requiredReferrals = null,
+    walletAddress = null
   ) {
 
     if (!tg) {
@@ -1913,6 +1914,11 @@
       requestBody.requiredReferrals =
         Number(requiredReferrals);
 
+    }
+
+    if (walletAddress) {
+      requestBody.walletAddress =
+        walletAddress;
     }
 
     let response;
@@ -4480,6 +4486,61 @@
      ================================================== */
 
   let tonConnectUI = null;
+  let lastSavedWalletAddress = null;
+
+  async function saveConnectedWallet(address) {
+
+    const value =
+      String(address || "").trim();
+
+    if (
+      !value ||
+      value === lastSavedWalletAddress
+    ) {
+      return;
+    }
+
+    try {
+
+      const data =
+        await callAPI(
+          "save_wallet",
+          null,
+          null,
+          value
+        );
+
+      if (
+        data &&
+        data.success === true
+      ) {
+
+        lastSavedWalletAddress =
+          value;
+
+        console.log(
+          "QIVO wallet saved successfully."
+        );
+
+      } else {
+
+        console.error(
+          "QIVO wallet save failed:",
+          data?.error ||
+          "Unknown error"
+        );
+
+      }
+
+    } catch (error) {
+
+      console.error(
+        "QIVO wallet save error:",
+        error
+      );
+
+    }
+  }
 
   function shortWalletAddress(address) {
 
@@ -4545,6 +4606,10 @@
 
             connectButton.textContent =
               "Disconnect Wallet";
+
+            saveConnectedWallet(
+              address
+            );
 
             connectButton.onclick =
               async function() {
