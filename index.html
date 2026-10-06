@@ -4502,12 +4502,9 @@
       document.getElementById("connectWallet");
 
     const walletStatus =
-      document.getElementById("walletStatus");
+      document.querySelector(".wallet-status");
 
-    if (
-      !connectButton ||
-      !walletStatus
-    ) {
+    if (!connectButton || !walletStatus) {
       return;
     }
 
@@ -4527,9 +4524,7 @@
       tonConnectUI =
         new TON_CONNECT_UI.TonConnectUI({
           manifestUrl:
-            "https://qivo1234.github.io/qivo-mini-app/tonconnect-manifest.json",
-          buttonRootId:
-            "qivoTonConnectButton"
+            "https://qivo1234.github.io/qivo-mini-app/tonconnect-manifest.json"
         });
 
       tonConnectUI.onStatusChange(
