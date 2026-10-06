@@ -2855,43 +2855,68 @@
     .getElementById("shareReferral")
     .addEventListener(
       "click",
-      function() {
+      async function() {
 
         const link =
-          referralLinkElement.textContent;
+          referralLinkElement.textContent.trim();
+
+
+        if (
+          !link ||
+          link === "Loading referral link..."
+        ) {
+
+          return;
+        }
+
 
         const shareText =
-          "🚀 Join me on QIVO and earn QIVO points!\n\n" +
-          "Tap • Earn • Level Up\n\n" +
-          link;
+          "🚀 Join me on QIVO and earn QIVO points!";
 
 
         /*
-          Telegram WebApp native share.
-
-          If available, Telegram opens
-          the share dialog directly.
+          FIRST:
+          Try the device/browser native share.
         */
 
         if (
-          tg &&
-          typeof tg.shareMessage === "function"
+          navigator.share &&
+          typeof navigator.share === "function"
         ) {
 
           try {
 
-            tg.shareMessage(
-              shareText
-            );
+            await navigator.share({
+
+              title:
+                "QIVO",
+
+              text:
+                shareText,
+
+              url:
+                link
+
+            });
 
             return;
 
           } catch (error) {
 
-            console.log(
-              "Telegram shareMessage unavailable:",
-              error
-            );
+            /*
+              If the user cancelled
+              the native share menu,
+              do nothing.
+            */
+
+            if (
+              error &&
+              error.name === "AbortError"
+            ) {
+
+              return;
+
+            }
 
           }
 
@@ -2899,7 +2924,8 @@
 
 
         /*
-          Universal Telegram share link.
+          SECOND:
+          Telegram universal share page.
         */
 
         const telegramShareUrl =
@@ -2907,25 +2933,51 @@
           encodeURIComponent(link) +
           "&text=" +
           encodeURIComponent(
-            "🚀 Join me on QIVO and earn QIVO points!"
+            shareText
           );
 
 
-        if (
-          tg &&
-          typeof tg.openTelegramLink === "function"
-        ) {
+        try {
 
-          tg.openTelegramLink(
-            telegramShareUrl
+          if (
+            tg &&
+            typeof tg.openLink === "function"
+          ) {
+
+            tg.openLink(
+              telegramShareUrl
+            );
+
+            return;
+
+          }
+
+        } catch (error) {
+
+          console.error(
+            "Telegram share error:",
+            error
           );
 
-        } else {
+        }
+
+
+        /*
+          FINAL FALLBACK:
+          Open the share page in browser.
+        */
+
+        try {
 
           window.open(
             telegramShareUrl,
             "_blank"
           );
+
+        } catch (error) {
+
+          window.location.href =
+            telegramShareUrl;
 
         }
 
