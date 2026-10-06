@@ -4493,11 +4493,14 @@
     const value =
       String(address || "").trim();
 
+    if (!value) {
+      return false;
+    }
+
     if (
-      !value ||
       value === lastSavedWalletAddress
     ) {
-      return;
+      return true;
     }
 
     try {
@@ -4522,15 +4525,17 @@
           "QIVO wallet saved successfully."
         );
 
-      } else {
-
-        console.error(
-          "QIVO wallet save failed:",
-          data?.error ||
-          "Unknown error"
-        );
+        return true;
 
       }
+
+      console.error(
+        "QIVO wallet save failed:",
+        data?.error ||
+        "Unknown error"
+      );
+
+      return false;
 
     } catch (error) {
 
@@ -4539,7 +4544,28 @@
         error
       );
 
+      return false;
+
     }
+  }
+
+  async function syncConnectedWallet() {
+
+    if (
+      !tonConnectUI ||
+      !tonConnectUI.wallet ||
+      !tonConnectUI.wallet.account ||
+      !tonConnectUI.wallet.account.address
+    ) {
+      return;
+    }
+
+    const address =
+      tonConnectUI.wallet.account.address;
+
+    await saveConnectedWallet(
+      address
+    );
   }
 
   function shortWalletAddress(address) {
@@ -4662,6 +4688,8 @@
 
         }
       );
+
+      await syncConnectedWallet();
 
       connectButton.onclick =
         async function() {
