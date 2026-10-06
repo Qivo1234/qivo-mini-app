@@ -485,6 +485,12 @@
       min-height: 15px;
     }
 
+    .tasks-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
     .task-item {
       width: 100%;
       padding: 14px;
@@ -494,6 +500,15 @@
       display: flex;
       align-items: center;
       gap: 12px;
+    }
+
+    .task-item.locked {
+      opacity: .55;
+    }
+
+    .task-item.completed-item {
+      border-color: rgba(117,103,255,.22);
+      background: rgba(117,103,255,.07);
     }
 
     .task-icon {
@@ -524,6 +539,12 @@
       color: rgba(255,255,255,.55);
     }
 
+    .task-progress {
+      margin-top: 4px;
+      font-size: 9px;
+      color: rgba(255,255,255,.38);
+    }
+
     .task-button {
       border: 0;
       border-radius: 10px;
@@ -534,12 +555,31 @@
       font-weight: 800;
       cursor: pointer;
       flex-shrink: 0;
+      min-width: 66px;
+    }
+
+    .task-button:disabled {
+      cursor: not-allowed;
+    }
+
+    .task-button.locked-button {
+      background: rgba(255,255,255,.08);
+      color: rgba(255,255,255,.35);
     }
 
     .task-button.completed {
       background: rgba(255,255,255,.10);
       color: rgba(255,255,255,.45);
       cursor: default;
+    }
+
+    .task-status {
+      margin-top: 12px;
+      min-height: 17px;
+      text-align: center;
+      font-size: 10px;
+      opacity: .55;
+      line-height: 1.5;
     }
 
     .leaderboard-row {
@@ -803,6 +843,16 @@
       .referral-actions {
         grid-template-columns: 1fr;
       }
+
+      .task-item {
+        gap: 8px;
+      }
+
+      .task-button {
+        padding-left: 10px;
+        padding-right: 10px;
+        min-width: 60px;
+      }
     }
   </style>
 </head>
@@ -1033,24 +1083,190 @@
 
     <div class="panel-title">✅ Tasks</div>
 
-    <div class="task-item">
+    <div class="tasks-list">
 
-      <div class="task-icon">📢</div>
+      <!-- CHANNEL TASK -->
 
-      <div class="task-info">
-        <div class="task-title">
-          Join Telegram Channel
+      <div id="channelTaskItem" class="task-item">
+
+        <div class="task-icon">
+          📢
         </div>
 
-        <div class="task-reward">
-          +500 Points
+        <div class="task-info">
+
+          <div class="task-title">
+            Join Telegram Channel
+          </div>
+
+          <div class="task-reward">
+            +5,000 QIVO
+          </div>
+
+          <div class="task-progress">
+            Join @QivoTap and verify your membership.
+          </div>
+
         </div>
+
+        <button
+          id="joinChannelTask"
+          class="task-button"
+          type="button"
+        >
+          Join
+        </button>
+
       </div>
 
-      <button id="joinChannelTask" class="task-button" type="button">
-        Join
-      </button>
 
+      <!-- REFERRAL 5 -->
+
+      <div id="referralTask5Item" class="task-item">
+
+        <div class="task-icon">
+          👥
+        </div>
+
+        <div class="task-info">
+
+          <div class="task-title">
+            Invite 5 Friends
+          </div>
+
+          <div class="task-reward">
+            +500,000 QIVO
+          </div>
+
+          <div id="referralTask5Progress" class="task-progress">
+            0 / 5 referrals
+          </div>
+
+        </div>
+
+        <button
+          id="referralTask5"
+          class="task-button locked-button"
+          type="button"
+          disabled
+        >
+          Locked
+        </button>
+
+      </div>
+
+
+      <!-- REFERRAL 10 -->
+
+      <div id="referralTask10Item" class="task-item">
+
+        <div class="task-icon">
+          👥
+        </div>
+
+        <div class="task-info">
+
+          <div class="task-title">
+            Invite 10 Friends
+          </div>
+
+          <div class="task-reward">
+            +1,000,000 QIVO
+          </div>
+
+          <div id="referralTask10Progress" class="task-progress">
+            0 / 10 referrals
+          </div>
+
+        </div>
+
+        <button
+          id="referralTask10"
+          class="task-button locked-button"
+          type="button"
+          disabled
+        >
+          Locked
+        </button>
+
+      </div>
+
+
+      <!-- REFERRAL 15 -->
+
+      <div id="referralTask15Item" class="task-item">
+
+        <div class="task-icon">
+          👥
+        </div>
+
+        <div class="task-info">
+
+          <div class="task-title">
+            Invite 15 Friends
+          </div>
+
+          <div class="task-reward">
+            +1,500,000 QIVO
+          </div>
+
+          <div id="referralTask15Progress" class="task-progress">
+            0 / 15 referrals
+          </div>
+
+        </div>
+
+        <button
+          id="referralTask15"
+          class="task-button locked-button"
+          type="button"
+          disabled
+        >
+          Locked
+        </button>
+
+      </div>
+
+
+      <!-- REFERRAL 20 -->
+
+      <div id="referralTask20Item" class="task-item">
+
+        <div class="task-icon">
+          👥
+        </div>
+
+        <div class="task-info">
+
+          <div class="task-title">
+            Invite 20 Friends
+          </div>
+
+          <div class="task-reward">
+            +2,000,000 QIVO
+          </div>
+
+          <div id="referralTask20Progress" class="task-progress">
+            0 / 20 referrals
+          </div>
+
+        </div>
+
+        <button
+          id="referralTask20"
+          class="task-button locked-button"
+          type="button"
+          disabled
+        >
+          Locked
+        </button>
+
+      </div>
+
+    </div>
+
+    <div id="taskStatus" class="task-status">
+      Complete tasks to earn extra QIVO points.
     </div>
 
   </section>
@@ -1195,6 +1411,32 @@
     500,
     600,
     700
+  ];
+
+
+  /* ==================================================
+     TASK CONSTANTS
+     ================================================== */
+
+  const CHANNEL_REWARD = 5000;
+
+  const REFERRAL_TASKS = [
+    {
+      required: 5,
+      reward: 500000
+    },
+    {
+      required: 10,
+      reward: 1000000
+    },
+    {
+      required: 15,
+      reward: 1500000
+    },
+    {
+      required: 20,
+      reward: 2000000
+    }
   ];
 
 
@@ -1363,7 +1605,18 @@
 
   let dailyDay = 1;
   let lastDailyReward = 0;
+
   let taskCompleted = false;
+
+  let channelTaskInProgress = false;
+  let referralTaskInProgress = false;
+
+  let referralTaskClaimed = {
+    5: false,
+    10: false,
+    15: false,
+    20: false
+  };
 
   let tapQuota = MAX_TAP_QUOTA;
   let tapQuotaResetAt = 0;
@@ -1430,6 +1683,12 @@
 
   const joinChannelTask =
     document.getElementById("joinChannelTask");
+
+  const channelTaskItem =
+    document.getElementById("channelTaskItem");
+
+  const taskStatus =
+    document.getElementById("taskStatus");
 
   const quotaValue =
     document.getElementById("quotaValue");
@@ -1619,7 +1878,8 @@
 
   async function callAPI(
     action,
-    referralCode = null
+    referralCode = null,
+    requiredReferrals = null
   ) {
 
     if (!tg) {
@@ -1642,6 +1902,16 @@
     if (referralCode) {
       requestBody.referralCode =
         referralCode;
+    }
+
+    if (
+      requiredReferrals !== null &&
+      requiredReferrals !== undefined
+    ) {
+
+      requestBody.requiredReferrals =
+        Number(requiredReferrals);
+
     }
 
     let response;
@@ -1720,7 +1990,104 @@
 
 
   /* ==================================================
-     SERVER USER
+     TASK LOCAL STORAGE
+     ================================================== */
+
+  function getTaskStorageKey() {
+
+    let userId = "guest";
+
+    if (
+      tg &&
+      tg.initDataUnsafe &&
+      tg.initDataUnsafe.user
+    ) {
+
+      userId =
+        String(
+          tg.initDataUnsafe.user.id
+        );
+
+    }
+
+    return "qivo_referral_tasks_" + userId;
+  }
+
+
+  function loadReferralTaskClaims() {
+
+    try {
+
+      const raw =
+        localStorage.getItem(
+          getTaskStorageKey()
+        );
+
+      if (!raw) {
+        return;
+      }
+
+      const saved =
+        JSON.parse(raw);
+
+      if (
+        saved &&
+        typeof saved === "object"
+      ) {
+
+        referralTaskClaimed = {
+
+          5:
+            saved[5] === true,
+
+          10:
+            saved[10] === true,
+
+          15:
+            saved[15] === true,
+
+          20:
+            saved[20] === true
+
+        };
+
+      }
+
+    } catch (error) {
+
+      console.error(
+        "Task storage error:",
+        error
+      );
+
+    }
+  }
+
+
+  function saveReferralTaskClaims() {
+
+    try {
+
+      localStorage.setItem(
+        getTaskStorageKey(),
+        JSON.stringify(
+          referralTaskClaimed
+        )
+      );
+
+    } catch (error) {
+
+      console.error(
+        "Task storage save error:",
+        error
+      );
+
+    }
+  }
+
+
+  /* ==================================================
+     APPLY SERVER USER
      ================================================== */
 
   function applyServerUser(user) {
@@ -1852,6 +2219,8 @@
         );
 
       }
+
+      loadReferralTaskClaims();
 
       let referralCode = null;
 
@@ -2178,7 +2547,8 @@
       );
 
     const seconds =
-      totalSeconds % 60;
+      totalSeconds %
+      60;
 
     quotaTimer.textContent =
       "Recharge in " +
@@ -2805,10 +3175,6 @@
   }
 
 
-  /*
-    COPY REFERRAL LINK
-  */
-
   document
     .getElementById("copyReferral")
     .addEventListener(
@@ -2847,10 +3213,6 @@
     );
 
 
-  /*
-    SHARE REFERRAL LINK
-  */
-
   document
     .getElementById("shareReferral")
     .addEventListener(
@@ -2860,7 +3222,6 @@
         const link =
           referralLinkElement.textContent.trim();
 
-
         if (
           !link ||
           link === "Loading referral link..."
@@ -2869,15 +3230,8 @@
           return;
         }
 
-
         const shareText =
           "🚀 Join me on QIVO and earn QIVO points!";
-
-
-        /*
-          FIRST:
-          Try the device/browser native share.
-        */
 
         if (
           navigator.share &&
@@ -2903,12 +3257,6 @@
 
           } catch (error) {
 
-            /*
-              If the user cancelled
-              the native share menu,
-              do nothing.
-            */
-
             if (
               error &&
               error.name === "AbortError"
@@ -2922,12 +3270,6 @@
 
         }
 
-
-        /*
-          SECOND:
-          Telegram universal share page.
-        */
-
         const telegramShareUrl =
           "https://t.me/share/url?url=" +
           encodeURIComponent(link) +
@@ -2935,7 +3277,6 @@
           encodeURIComponent(
             shareText
           );
-
 
         try {
 
@@ -2961,12 +3302,6 @@
 
         }
 
-
-        /*
-          FINAL FALLBACK:
-          Open the share page in browser.
-        */
-
         try {
 
           window.open(
@@ -2989,13 +3324,18 @@
      TASKS
      ================================================== */
 
-  function updateTaskUI() {
+  function updateChannelTaskUI() {
 
-    if (!joinChannelTask) {
+    if (
+      !joinChannelTask
+    ) {
+
       return;
     }
 
-    if (taskCompleted) {
+    if (
+      taskCompleted
+    ) {
 
       joinChannelTask.textContent =
         "Completed";
@@ -3007,31 +3347,609 @@
       joinChannelTask.disabled =
         true;
 
-    } else {
+      channelTaskItem.classList.add(
+        "completed-item"
+      );
+
+      return;
+    }
+
+    channelTaskItem.classList.remove(
+      "completed-item"
+    );
+
+    if (
+      channelTaskInProgress
+    ) {
 
       joinChannelTask.textContent =
-        "Join";
+        "Checking...";
 
-      joinChannelTask.classList.remove(
+      joinChannelTask.disabled =
+        true;
+
+      return;
+    }
+
+    joinChannelTask.textContent =
+      "Join";
+
+    joinChannelTask.classList.remove(
+      "completed"
+    );
+
+    joinChannelTask.disabled =
+      false;
+  }
+
+
+  function updateReferralTask(
+    required,
+    reward
+  ) {
+
+    const button =
+      document.getElementById(
+        "referralTask" + required
+      );
+
+    const item =
+      document.getElementById(
+        "referralTask" + required + "Item"
+      );
+
+    const progress =
+      document.getElementById(
+        "referralTask" + required + "Progress"
+      );
+
+    if (
+      !button ||
+      !item ||
+      !progress
+    ) {
+
+      return;
+    }
+
+    const count =
+      Math.max(
+        0,
+        Number(referralCount) || 0
+      );
+
+    progress.textContent =
+      count +
+      " / " +
+      required +
+      " referrals";
+
+
+    if (
+      referralTaskClaimed[required]
+    ) {
+
+      button.textContent =
+        "Completed";
+
+      button.disabled =
+        true;
+
+      button.classList.remove(
+        "locked-button"
+      );
+
+      button.classList.add(
         "completed"
       );
 
-      joinChannelTask.disabled =
+      item.classList.remove(
+        "locked"
+      );
+
+      item.classList.add(
+        "completed-item"
+      );
+
+      return;
+    }
+
+
+    item.classList.remove(
+      "completed-item"
+    );
+
+
+    if (
+      count < required
+    ) {
+
+      button.textContent =
+        "Locked";
+
+      button.disabled =
+        true;
+
+      button.classList.add(
+        "locked-button"
+      );
+
+      button.classList.remove(
+        "completed"
+      );
+
+      item.classList.add(
+        "locked"
+      );
+
+      return;
+    }
+
+
+    item.classList.remove(
+      "locked"
+    );
+
+    button.classList.remove(
+      "locked-button"
+    );
+
+    button.classList.remove(
+      "completed"
+    );
+
+    if (
+      referralTaskInProgress
+    ) {
+
+      button.textContent =
+        "Claiming...";
+
+      button.disabled =
+        true;
+
+    } else {
+
+      button.textContent =
+        "Claim";
+
+      button.disabled =
         false;
+
     }
   }
 
 
+  function updateTaskUI() {
+
+    updateChannelTaskUI();
+
+    REFERRAL_TASKS.forEach(
+      function(task) {
+
+        updateReferralTask(
+          task.required,
+          task.reward
+        );
+
+      }
+    );
+  }
+
+
+  /* ==================================================
+     CHANNEL TASK
+     ================================================== */
+
   joinChannelTask.addEventListener(
     "click",
-    function() {
+    async function() {
 
-      alert(
-        "Task verification will be connected to the secure backend next."
-      );
+      if (
+        !backendReady ||
+        channelTaskInProgress
+      ) {
+
+        return;
+      }
+
+      if (
+        taskCompleted
+      ) {
+
+        return;
+      }
+
+
+      /*
+        FIRST CLICK:
+        Open Telegram channel.
+      */
+
+      if (
+        joinChannelTask.textContent ===
+        "Join"
+      ) {
+
+        try {
+
+          const channelUrl =
+            "https://t.me/QivoTap";
+
+          if (
+            tg &&
+            typeof tg.openTelegramLink ===
+            "function"
+          ) {
+
+            tg.openTelegramLink(
+              channelUrl
+            );
+
+          } else if (
+            tg &&
+            typeof tg.openLink ===
+            "function"
+          ) {
+
+            tg.openLink(
+              channelUrl
+            );
+
+          } else {
+
+            window.open(
+              channelUrl,
+              "_blank"
+            );
+
+          }
+
+          /*
+            After opening the channel,
+            change button to Verify.
+          */
+
+          setTimeout(
+            function() {
+
+              if (
+                !taskCompleted
+              ) {
+
+                joinChannelTask.textContent =
+                  "Verify";
+
+              }
+
+            },
+            700
+          );
+
+        } catch (error) {
+
+          console.error(
+            "Open channel error:",
+            error
+          );
+
+        }
+
+        return;
+      }
+
+
+      /*
+        VERIFY MEMBERSHIP
+      */
+
+      channelTaskInProgress =
+        true;
+
+      taskStatus.textContent =
+        "Checking your @QivoTap membership...";
+
+      updateTaskUI();
+
+      try {
+
+        const data =
+          await callAPI(
+            "channel_task"
+          );
+
+        if (
+          data &&
+          data.success === true
+        ) {
+
+          if (
+            data.balance !== undefined
+          ) {
+
+            balance =
+              Number(data.balance) || 0;
+
+          }
+
+          if (
+            data.alreadyClaimed === true ||
+            data.reward > 0
+          ) {
+
+            taskCompleted =
+              true;
+
+            taskStatus.textContent =
+              data.alreadyClaimed
+                ? "Channel task already completed."
+                : "+" +
+                  Number(
+                    data.reward || CHANNEL_REWARD
+                  ).toLocaleString("en-US") +
+                  " QIVO added!";
+
+          } else {
+
+            taskCompleted =
+              true;
+
+            taskStatus.textContent =
+              "Channel task completed.";
+
+          }
+
+          updateUI();
+
+        } else {
+
+          taskStatus.textContent =
+            (
+              data?.error ||
+              "You must join @QivoTap first."
+            );
+
+        }
+
+      } catch (error) {
+
+        console.error(
+          "Channel task error:",
+          error
+        );
+
+        taskStatus.textContent =
+          "Unable to verify membership. Please try again.";
+
+      } finally {
+
+        channelTaskInProgress =
+          false;
+
+        updateTaskUI();
+
+      }
 
     }
   );
+
+
+  /* ==================================================
+     REFERRAL TASK CLAIM
+     ================================================== */
+
+  async function claimReferralTask(
+    required,
+    reward
+  ) {
+
+    if (
+      !backendReady ||
+      referralTaskInProgress
+    ) {
+
+      return;
+    }
+
+    const count =
+      Math.max(
+        0,
+        Number(referralCount) || 0
+      );
+
+    if (
+      count < required
+    ) {
+
+      taskStatus.textContent =
+        "You need at least " +
+        required +
+        " successful referrals.";
+
+      return;
+    }
+
+    if (
+      referralTaskClaimed[required]
+    ) {
+
+      return;
+    }
+
+    referralTaskInProgress =
+      true;
+
+    taskStatus.textContent =
+      "Claiming " +
+      Number(reward).toLocaleString("en-US") +
+      " QIVO...";
+
+    updateTaskUI();
+
+    try {
+
+      const data =
+        await callAPI(
+          "referral_task",
+          null,
+          required
+        );
+
+      if (
+        data &&
+        data.success === true
+      ) {
+
+        if (
+          data.balance !== undefined
+        ) {
+
+          balance =
+            Number(data.balance) || 0;
+
+        }
+
+        /*
+          Server can return reward = 0
+          when the task was already claimed.
+        */
+
+        referralTaskClaimed[required] =
+          true;
+
+        saveReferralTaskClaims();
+
+        updateUI();
+
+        if (
+          data.alreadyClaimed === true
+        ) {
+
+          taskStatus.textContent =
+            "This referral reward was already claimed.";
+
+        } else {
+
+          taskStatus.textContent =
+            "+" +
+            Number(
+              data.reward || reward
+            ).toLocaleString("en-US") +
+            " QIVO added to your balance!";
+
+        }
+
+      } else {
+
+        taskStatus.textContent =
+          (
+            data?.error ||
+            "Unable to claim referral reward."
+          );
+
+        /*
+          If the server says it was already claimed,
+          mark it completed locally.
+        */
+
+        const errorText =
+          String(
+            data?.error || ""
+          ).toLowerCase();
+
+        if (
+          errorText.includes("already") &&
+          errorText.includes("claim")
+        ) {
+
+          referralTaskClaimed[required] =
+            true;
+
+          saveReferralTaskClaims();
+
+        }
+
+      }
+
+    } catch (error) {
+
+      console.error(
+        "Referral task error:",
+        error
+      );
+
+      taskStatus.textContent =
+        "Unable to claim reward. Please try again.";
+
+    } finally {
+
+      referralTaskInProgress =
+        false;
+
+      updateTaskUI();
+
+    }
+  }
+
+
+  document
+    .getElementById("referralTask5")
+    .addEventListener(
+      "click",
+      function() {
+
+        claimReferralTask(
+          5,
+          500000
+        );
+
+      }
+    );
+
+
+  document
+    .getElementById("referralTask10")
+    .addEventListener(
+      "click",
+      function() {
+
+        claimReferralTask(
+          10,
+          1000000
+        );
+
+      }
+    );
+
+
+  document
+    .getElementById("referralTask15")
+    .addEventListener(
+      "click",
+      function() {
+
+        claimReferralTask(
+          15,
+          1500000
+        );
+
+      }
+    );
+
+
+  document
+    .getElementById("referralTask20")
+    .addEventListener(
+      "click",
+      function() {
+
+        claimReferralTask(
+          20,
+          2000000
+        );
+
+      }
+    );
 
 
   /* ==================================================
@@ -3319,11 +4237,6 @@
         error
       );
 
-      /*
-        Even if the backend is temporarily
-        unavailable, show the fake players.
-      */
-
       const fallbackPlayers =
         fakeLeaderboard;
 
@@ -3457,6 +4370,15 @@
       ) {
 
         updateUpgradeUI();
+
+      }
+
+      if (
+        id ===
+        "tasksPanel"
+      ) {
+
+        updateTaskUI();
 
       }
 
