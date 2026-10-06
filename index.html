@@ -378,15 +378,37 @@
       margin-bottom: 10px;
     }
 
-    .copy-button {
+    .referral-actions {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .copy-button,
+    .share-button {
       width: 100%;
       border: 0;
       border-radius: 11px;
-      padding: 12px;
-      background: #7567ff;
+      padding: 12px 8px;
       color: white;
       font-weight: 800;
       cursor: pointer;
+      font-size: 11px;
+    }
+
+    .copy-button {
+      background: #7567ff;
+    }
+
+    .share-button {
+      background: rgba(117,103,255,.20);
+      border: 1px solid rgba(117,103,255,.30);
+    }
+
+    .copy-button:active,
+    .share-button:active {
+      transform: scale(.97);
     }
 
     .referral-info {
@@ -777,6 +799,10 @@
         padding-left: 13px;
         padding-right: 13px;
       }
+
+      .referral-actions {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
@@ -967,9 +993,17 @@
       Loading referral link...
     </div>
 
-    <button id="copyReferral" class="copy-button" type="button">
-      Copy Referral Link
-    </button>
+    <div class="referral-actions">
+
+      <button id="copyReferral" class="copy-button" type="button">
+        📋 Copy Link
+      </button>
+
+      <button id="shareReferral" class="share-button" type="button">
+        📤 Share Link
+      </button>
+
+    </div>
 
     <div class="referral-info">
       Friends invited:
@@ -1238,7 +1272,6 @@
 
       const position = i + 1;
 
-
       let score;
 
       if (
@@ -1255,17 +1288,6 @@
         score = 1;
 
       } else {
-
-        /*
-          Smooth descending distribution.
-
-          #1     = 440,000,000
-          #11,000 = 1
-
-          Higher ranks have much larger
-          differences so the leaderboard
-          looks more natural.
-        */
 
         const ratio =
           (position - 1) /
@@ -1285,18 +1307,15 @@
 
       }
 
-
       const firstName =
         FAKE_FIRST_NAMES[
           i %
           FAKE_FIRST_NAMES.length
         ];
 
-
       const number =
         String(position)
           .padStart(5, "0");
-
 
       players.push({
 
@@ -1324,19 +1343,9 @@
 
     }
 
-
     return players;
   }
 
-
-  /*
-    Generated once and reused.
-
-    These users are ONLY for the
-    visual leaderboard.
-
-    They are NOT saved in Supabase.
-  */
 
   const fakeLeaderboard =
     generateFakePlayers();
@@ -1456,7 +1465,6 @@
         Number(balance) || 0
       ).toLocaleString("en-US");
 
-
     levelElement.textContent =
       Math.min(
         MAX_LEVEL,
@@ -1465,7 +1473,6 @@
           Number(level) || 1
         )
       );
-
 
     tapPowerElement.textContent =
       Math.min(
@@ -1476,13 +1483,11 @@
         )
       );
 
-
     referralCountElement.textContent =
       Math.max(
         0,
         Number(referralCount) || 0
       );
-
 
     referralEarnedElement.textContent =
       (
@@ -1492,7 +1497,6 @@
         ) * 2000
       ).toLocaleString("en-US");
 
-
     quotaValue.textContent =
       Math.max(
         0,
@@ -1500,7 +1504,6 @@
       ).toLocaleString("en-US") +
       " / " +
       MAX_TAP_QUOTA;
-
 
     updateTapButton();
     updateDailyUI();
@@ -1725,7 +1728,6 @@
     balance =
       Number(user.balance) || 0;
 
-
     energy =
       Number(user.energy);
 
@@ -1742,7 +1744,6 @@
         )
       );
 
-
     level =
       Number(user.level) || 1;
 
@@ -1754,7 +1755,6 @@
           level
         )
       );
-
 
     tapPower =
       Number(user.tap_power) || 1;
@@ -1768,10 +1768,8 @@
         )
       );
 
-
     referralCount =
       Number(user.referral_count) || 0;
-
 
     dailyDay =
       Number(user.daily_day) || 1;
@@ -1782,7 +1780,6 @@
     ) {
       dailyDay = 1;
     }
-
 
     if (user.daily_claimed_at) {
 
@@ -1797,10 +1794,8 @@
 
     }
 
-
     taskCompleted =
       user.task_join_channel === true;
-
 
     tapQuota =
       Number(user.tap_quota);
@@ -1817,7 +1812,6 @@
           tapQuota
         )
       );
-
 
     if (user.tap_quota_reset_at) {
 
@@ -1859,9 +1853,7 @@
 
       }
 
-
       let referralCode = null;
-
 
       if (
         tg.initDataUnsafe &&
@@ -1882,13 +1874,11 @@
 
       }
 
-
       const data =
         await callAPI(
           "init",
           referralCode
         );
-
 
       if (!data.user) {
 
@@ -1898,14 +1888,11 @@
 
       }
 
-
       applyServerUser(
         data.user
       );
 
-
       backendReady = true;
-
 
       if (
         pendingBeforeBackend > 0
@@ -1924,17 +1911,13 @@
         pendingBeforeBackend = 0;
       }
 
-
       updateUI();
-
 
       console.log(
         "QIVO backend connected"
       );
 
-
       processTapQueue();
-
 
     } catch (error) {
 
@@ -1973,9 +1956,7 @@
       return;
     }
 
-
     tapProcessorRunning = true;
-
 
     try {
 
@@ -1985,12 +1966,10 @@
 
         tapQueue.shift();
 
-
         try {
 
           const data =
             await callAPI("tap");
-
 
           if (
             !data ||
@@ -2006,7 +1985,6 @@
 
             continue;
           }
-
 
           if (
             data.level !== undefined
@@ -2030,7 +2008,6 @@
             }
           }
 
-
           if (
             data.tap_power !== undefined
           ) {
@@ -2053,9 +2030,7 @@
             }
           }
 
-
           updateUI();
-
 
         } catch (error) {
 
@@ -2070,11 +2045,9 @@
         }
       }
 
-
     } finally {
 
       tapProcessorRunning = false;
-
 
       if (
         backendReady &&
@@ -2084,7 +2057,6 @@
 
         await refreshServerState();
       }
-
 
       if (
         backendReady &&
@@ -2113,20 +2085,17 @@
         return;
       }
 
-
       const tapAmount =
         Math.max(
           1,
           Number(tapPower) || 1
         );
 
-
       balance += tapAmount;
 
       energy -= ENERGY_PER_TAP;
 
       tapQuota -= 1;
-
 
       if (energy < 0) {
         energy = 0;
@@ -2135,7 +2104,6 @@
       if (tapQuota < 0) {
         tapQuota = 0;
       }
-
 
       if (backendReady) {
 
@@ -2147,7 +2115,6 @@
 
         pendingBeforeBackend++;
       }
-
 
       updateUI();
 
@@ -2169,7 +2136,6 @@
       return;
     }
 
-
     const remaining =
       Math.max(
         0,
@@ -2177,12 +2143,10 @@
         Date.now()
       );
 
-
     if (remaining <= 0) {
 
       quotaTimer.textContent =
         "Recharge ready";
-
 
       if (
         backendReady &&
@@ -2198,28 +2162,23 @@
       return;
     }
 
-
     const totalSeconds =
       Math.floor(
         remaining / 1000
       );
-
 
     const hours =
       Math.floor(
         totalSeconds / 3600
       );
 
-
     const minutes =
       Math.floor(
         (totalSeconds % 3600) / 60
       );
 
-
     const seconds =
       totalSeconds % 60;
-
 
     quotaTimer.textContent =
       "Recharge in " +
@@ -2247,14 +2206,12 @@
       return;
     }
 
-
     if (
       tapProcessorRunning
     ) {
 
       return;
     }
-
 
     if (
       tapQueue.length > 0 ||
@@ -2264,27 +2221,22 @@
       return;
     }
 
-
     if (refreshInProgress) {
       return;
     }
 
-
     refreshInProgress = true;
-
 
     try {
 
       const data =
         await callAPI("init");
 
-
       if (!data.user) {
         throw new Error(
           "User data was not returned"
         );
       }
-
 
       if (
         tapProcessorRunning ||
@@ -2295,17 +2247,13 @@
         return;
       }
 
-
       applyServerUser(
         data.user
       );
 
-
       tapSyncNeeded = false;
 
-
       updateUI();
-
 
     } catch (error) {
 
@@ -2355,20 +2303,17 @@
       }
     }
 
-
     const now =
       Date.now();
 
     const twentyFourHours =
       24 * 60 * 60 * 1000;
 
-
     const canClaim =
       !lastDailyReward ||
       now >=
       lastDailyReward +
       twentyFourHours;
-
 
     const reward =
       DAILY_REWARDS[
@@ -2380,7 +2325,6 @@
           )
         )
       ];
-
 
     if (canClaim) {
 
@@ -2416,32 +2360,27 @@
           now
         );
 
-
       const totalSeconds =
         Math.floor(
           remaining / 1000
         );
-
 
       const hours =
         Math.floor(
           totalSeconds / 3600
         );
 
-
       const minutes =
         Math.floor(
           (totalSeconds % 3600) / 60
         );
 
-
       const seconds =
-        totalSeconds % 60;
-
+        totalSeconds %
+        60;
 
       dailyButton.textContent =
         "Reward Claimed";
-
 
       dailyStatus.textContent =
         "Next reward in " +
@@ -2466,7 +2405,6 @@
         return;
       }
 
-
       if (
         tapProcessorRunning ||
         tapQueue.length > 0 ||
@@ -2479,9 +2417,7 @@
         return;
       }
 
-
       dailyClaimInProgress = true;
-
 
       dailyButton.disabled =
         true;
@@ -2492,14 +2428,12 @@
       dailyButton.textContent =
         "Claiming...";
 
-
       try {
 
         const data =
           await callAPI(
             "daily_reward"
           );
-
 
         if (
           data &&
@@ -2514,7 +2448,6 @@
               Number(data.balance) || 0;
           }
 
-
           if (
             data.daily_day !== undefined
           ) {
@@ -2522,7 +2455,6 @@
             dailyDay =
               Number(data.daily_day) || 1;
           }
-
 
           if (
             data.daily_claimed_at
@@ -2534,9 +2466,7 @@
               ).getTime();
           }
 
-
           updateUI();
-
 
           dailyStatus.textContent =
             "+" +
@@ -2555,7 +2485,6 @@
 
           await refreshServerState();
         }
-
 
       } catch (error) {
 
@@ -2610,10 +2539,8 @@
         )
       );
 
-
     tapPower =
       currentPower;
-
 
     if (
       currentPower >=
@@ -2638,25 +2565,20 @@
       return;
     }
 
-
     const upgradeCost =
       currentPower * 100;
 
-
     const nextPower =
       currentPower + 1;
-
 
     upgradeCostElement.textContent =
       upgradeCost.toLocaleString(
         "en-US"
       );
 
-
     upgradeButton.textContent =
       "Upgrade to Power " +
       nextPower;
-
 
     if (
       !backendReady ||
@@ -2674,7 +2596,6 @@
 
       return;
     }
-
 
     if (
       balance < upgradeCost
@@ -2709,7 +2630,6 @@
         return;
       }
 
-
       if (
         tapProcessorRunning ||
         tapQueue.length > 0 ||
@@ -2722,7 +2642,6 @@
         return;
       }
 
-
       const currentPower =
         Math.max(
           1,
@@ -2731,7 +2650,6 @@
             Number(tapPower) || 1
           )
         );
-
 
       if (
         currentPower >=
@@ -2743,10 +2661,8 @@
         return;
       }
 
-
       const upgradeCost =
         currentPower * 100;
-
 
       if (
         balance < upgradeCost
@@ -2760,9 +2676,7 @@
         return;
       }
 
-
       upgradeInProgress = true;
-
 
       upgradeButton.disabled =
         true;
@@ -2773,10 +2687,8 @@
       upgradeButton.textContent =
         "Upgrading...";
 
-
       upgradeStatus.textContent =
         "Processing upgrade...";
-
 
       try {
 
@@ -2784,7 +2696,6 @@
           await callAPI(
             "upgrade"
           );
-
 
         if (
           data &&
@@ -2798,7 +2709,6 @@
             balance =
               Number(data.balance) || 0;
           }
-
 
           if (
             data.tap_power !== undefined
@@ -2817,9 +2727,7 @@
               );
           }
 
-
           updateUI();
-
 
           if (
             tapPower >=
@@ -2847,7 +2755,6 @@
 
           await refreshServerState();
         }
-
 
       } catch (error) {
 
@@ -2879,7 +2786,6 @@
     let userId =
       "demo";
 
-
     if (
       tg &&
       tg.initDataUnsafe &&
@@ -2890,16 +2796,18 @@
         tg.initDataUnsafe.user.id;
     }
 
-
     const link =
       "https://t.me/Qivotapbot?start=ref_" +
       userId;
-
 
     referralLinkElement.textContent =
       link;
   }
 
+
+  /*
+    COPY REFERRAL LINK
+  */
 
   document
     .getElementById("copyReferral")
@@ -2910,28 +2818,24 @@
         const link =
           referralLinkElement.textContent;
 
-
         try {
 
           await navigator.clipboard.writeText(
             link
           );
 
-
           this.textContent =
-            "Copied!";
-
+            "✓ Copied!";
 
           setTimeout(
             () => {
 
               this.textContent =
-                "Copy Referral Link";
+                "📋 Copy Link";
 
             },
             1500
           );
-
 
         } catch (error) {
 
@@ -2939,6 +2843,92 @@
             "Copy failed. Please copy the link manually."
           );
         }
+      }
+    );
+
+
+  /*
+    SHARE REFERRAL LINK
+  */
+
+  document
+    .getElementById("shareReferral")
+    .addEventListener(
+      "click",
+      function() {
+
+        const link =
+          referralLinkElement.textContent;
+
+        const shareText =
+          "🚀 Join me on QIVO and earn QIVO points!\n\n" +
+          "Tap • Earn • Level Up\n\n" +
+          link;
+
+
+        /*
+          Telegram WebApp native share.
+
+          If available, Telegram opens
+          the share dialog directly.
+        */
+
+        if (
+          tg &&
+          typeof tg.shareMessage === "function"
+        ) {
+
+          try {
+
+            tg.shareMessage(
+              shareText
+            );
+
+            return;
+
+          } catch (error) {
+
+            console.log(
+              "Telegram shareMessage unavailable:",
+              error
+            );
+
+          }
+
+        }
+
+
+        /*
+          Universal Telegram share link.
+        */
+
+        const telegramShareUrl =
+          "https://t.me/share/url?url=" +
+          encodeURIComponent(link) +
+          "&text=" +
+          encodeURIComponent(
+            "🚀 Join me on QIVO and earn QIVO points!"
+          );
+
+
+        if (
+          tg &&
+          typeof tg.openTelegramLink === "function"
+        ) {
+
+          tg.openTelegramLink(
+            telegramShareUrl
+          );
+
+        } else {
+
+          window.open(
+            telegramShareUrl,
+            "_blank"
+          );
+
+        }
+
       }
     );
 
@@ -2952,7 +2942,6 @@
     if (!joinChannelTask) {
       return;
     }
-
 
     if (taskCompleted) {
 
@@ -3004,36 +2993,20 @@
         "leaderboardContent"
       );
 
-
     container.innerHTML =
       "Loading leaderboard...";
 
-
     try {
-
-      /*
-        Get real users from Supabase.
-
-        Fake users are NOT requested from
-        Supabase and are never stored there.
-      */
 
       const data =
         await callAPI(
           "leaderboard"
         );
 
-
       const realRows =
         Array.isArray(data.leaderboard)
           ? data.leaderboard
           : [];
-
-
-      /*
-        Convert real users into the same
-        format as fake users.
-      */
 
       const realPlayers =
         realRows.map(
@@ -3064,29 +3037,10 @@
           }
         );
 
-
-      /*
-        Combine:
-
-        11,000 fake players
-        +
-        all real players
-      */
-
       const allPlayers =
         fakeLeaderboard.concat(
           realPlayers
         );
-
-
-      /*
-        Sort everyone by current
-        balance from highest to lowest.
-
-        This means when a real user
-        spends points, their rank
-        automatically changes.
-      */
 
       allPlayers.sort(
         function(a, b) {
@@ -3102,14 +3056,8 @@
         }
       );
 
-
-      /*
-        Find current Telegram user.
-      */
-
       let currentUserId =
         null;
-
 
       if (
         tg &&
@@ -3124,14 +3072,8 @@
 
       }
 
-
-      /*
-        Find user's exact position.
-      */
-
       let myIndex =
         -1;
-
 
       if (currentUserId) {
 
@@ -3152,7 +3094,6 @@
 
       }
 
-
       if (myIndex >= 0) {
 
         document.getElementById(
@@ -3170,11 +3111,6 @@
 
       }
 
-
-      /*
-        Header / summary.
-      */
-
       let html =
         "";
 
@@ -3185,31 +3121,14 @@
           </div>
         `;
 
-
-      /*
-        Determine which rows should
-        actually be rendered.
-
-        We keep the complete 11,000+
-        player list in memory for ranking,
-        but don't create 11,000 DOM
-        elements on a phone.
-      */
-
       const visibleIndexes =
         new Set();
-
-
-      /*
-        Always show top 100.
-      */
 
       const topCount =
         Math.min(
           100,
           allPlayers.length
         );
-
 
       for (
         let i = 0;
@@ -3220,12 +3139,6 @@
         visibleIndexes.add(i);
 
       }
-
-
-      /*
-        Show players around current
-        user's position too.
-      */
 
       if (myIndex >= 0) {
 
@@ -3251,7 +3164,6 @@
 
       }
 
-
       const sortedIndexes =
         Array.from(
           visibleIndexes
@@ -3260,18 +3172,11 @@
             a - b
         );
 
-
       let previousIndex =
         -1;
 
-
       sortedIndexes.forEach(
         function(index) {
-
-          /*
-            Add separator when there
-            is a hidden section.
-          */
 
           if (
             previousIndex !== -1 &&
@@ -3287,10 +3192,8 @@
 
           }
 
-
           const player =
             allPlayers[index];
-
 
           const isMe =
             !player.fake &&
@@ -3300,15 +3203,12 @@
             ) ===
             currentUserId;
 
-
           const rowClass =
             isMe
               ? "leaderboard-row me"
               : "leaderboard-row";
 
-
           let name;
-
 
           if (player.fake) {
 
@@ -3331,7 +3231,6 @@
 
           }
 
-
           html +=
             `
               <div class="${rowClass}">
@@ -3352,17 +3251,14 @@
               </div>
             `;
 
-
           previousIndex =
             index;
 
         }
       );
 
-
       container.innerHTML =
         html;
-
 
     } catch (error) {
 
@@ -3371,19 +3267,61 @@
         error
       );
 
+      /*
+        Even if the backend is temporarily
+        unavailable, show the fake players.
+      */
 
-      container.innerHTML =
+      const fallbackPlayers =
+        fakeLeaderboard;
+
+      let fallbackHTML =
         `
-          <div style="
-            text-align:center;
-            padding:15px;
-            font-size:11px;
-            opacity:.55;
-          ">
-            Unable to load leaderboard.
+          <div class="leaderboard-summary">
+            🏆 11,000 QIVO players are competing
           </div>
         `;
 
+      const fallbackCount =
+        Math.min(
+          100,
+          fallbackPlayers.length
+        );
+
+      for (
+        let i = 0;
+        i < fallbackCount;
+        i++
+      ) {
+
+        const player =
+          fallbackPlayers[i];
+
+        fallbackHTML +=
+          `
+            <div class="leaderboard-row">
+              <div class="rank">
+                #${i + 1}
+              </div>
+
+              <div class="player">
+                ${escapeHTML(
+                  player.first_name
+                )}
+              </div>
+
+              <div class="score">
+                ${Number(
+                  player.balance
+                ).toLocaleString("en-US")}
+              </div>
+            </div>
+          `;
+
+      }
+
+      container.innerHTML =
+        fallbackHTML;
 
       document.getElementById(
         "myRank"
@@ -3430,7 +3368,6 @@
             panelId
           );
 
-
         if (panel) {
 
           panel.classList.remove(
@@ -3442,19 +3379,16 @@
       }
     );
 
-
     const panel =
       document.getElementById(
         id
       );
-
 
     if (panel) {
 
       panel.classList.add(
         "active"
       );
-
 
       if (
         id ===
@@ -3465,7 +3399,6 @@
 
       }
 
-
       if (
         id ===
         "upgradePanel"
@@ -3474,7 +3407,6 @@
         updateUpgradeUI();
 
       }
-
 
       setTimeout(
         () => {
@@ -3599,59 +3531,48 @@
       ).textContent =
         "Guest User";
 
-
       document.getElementById(
         "profileUsername"
       ).textContent =
         "Telegram unavailable";
-
 
       document.getElementById(
         "telegramUserId"
       ).textContent =
         "Not available";
 
-
       return;
     }
-
 
     const user =
       tg.initDataUnsafe.user;
 
-
     const firstName =
       user.first_name ||
       "User";
-
 
     const username =
       user.username
         ? "@" + user.username
         : "No username";
 
-
     document.getElementById(
       "profileName"
     ).textContent =
       firstName;
-
 
     document.getElementById(
       "profileUsername"
     ).textContent =
       username;
 
-
     document.getElementById(
       "telegramUserId"
     ).textContent =
       String(user.id);
 
-
     const parameter =
       tg.initDataUnsafe.start_param;
-
 
     document.getElementById(
       "startParameter"
@@ -3659,24 +3580,20 @@
       parameter ||
       "None";
 
-
     const letter =
       firstName
         .charAt(0)
         .toUpperCase();
-
 
     document.getElementById(
       "profileLetter"
     ).textContent =
       letter;
 
-
     document.getElementById(
       "profileBigLetter"
     ).textContent =
       letter;
-
 
     if (
       user.photo_url
@@ -3687,34 +3604,27 @@
           "profileImage"
         );
 
-
       const profileBigImage =
         document.getElementById(
           "profileBigImage"
         );
 
-
       profileImage.src =
         user.photo_url;
-
 
       profileBigImage.src =
         user.photo_url;
 
-
       profileImage.style.display =
         "block";
 
-
       profileBigImage.style.display =
         "block";
-
 
       document.getElementById(
         "profileLetter"
       ).style.display =
         "none";
-
 
       document.getElementById(
         "profileBigLetter"
@@ -3739,7 +3649,6 @@
 
         return;
       }
-
 
       if (
         backendReady &&
