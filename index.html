@@ -528,17 +528,51 @@
       font-size: 12px;
     }
 
+    .leaderboard-row.me {
+      margin-left: -8px;
+      margin-right: -8px;
+      padding-left: 8px;
+      padding-right: 8px;
+      border-radius: 10px;
+      background: rgba(117,103,255,.13);
+      border-bottom-color: rgba(117,103,255,.20);
+    }
+
     .rank {
-      width: 35px;
+      width: 48px;
       font-weight: 800;
+      color: rgba(255,255,255,.65);
     }
 
     .player {
       flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .score {
       font-weight: 800;
+      margin-left: 8px;
+    }
+
+    .leaderboard-summary {
+      margin-bottom: 12px;
+      padding: 10px 12px;
+      border-radius: 11px;
+      background: rgba(117,103,255,.08);
+      border: 1px solid rgba(117,103,255,.12);
+      text-align: center;
+      font-size: 10px;
+      opacity: .65;
+    }
+
+    .leaderboard-separator {
+      text-align: center;
+      padding: 8px 0;
+      font-size: 10px;
+      opacity: .35;
     }
 
     .my-rank {
@@ -1128,6 +1162,184 @@
     600,
     700
   ];
+
+
+  /* ==================================================
+     FAKE LEADERBOARD
+     ================================================== */
+
+  const FAKE_PLAYER_COUNT = 11000;
+  const FAKE_TOP_SCORE = 440000000;
+
+
+  const FAKE_FIRST_NAMES = [
+    "Alex",
+    "Liam",
+    "Noah",
+    "Oliver",
+    "James",
+    "Lucas",
+    "Ethan",
+    "Mason",
+    "Leo",
+    "Daniel",
+    "Henry",
+    "Jack",
+    "William",
+    "Benjamin",
+    "Samuel",
+    "Elijah",
+    "Aiden",
+    "Matthew",
+    "Jackson",
+    "Sebastian",
+    "David",
+    "Joseph",
+    "Carter",
+    "Owen",
+    "Wyatt",
+    "John",
+    "Dylan",
+    "Luke",
+    "Gabriel",
+    "Julian",
+    "Isaac",
+    "Anthony",
+    "Grayson",
+    "Lincoln",
+    "Ezra",
+    "Thomas",
+    "Charles",
+    "Christopher",
+    "Jaxon",
+    "Andrew",
+    "Mateo",
+    "Ryan",
+    "Nathan",
+    "Adam",
+    "Adrian",
+    "Christian",
+    "Maverick",
+    "Colton",
+    "Elias",
+    "Aaron"
+  ];
+
+
+  function generateFakePlayers() {
+
+    const players = [];
+
+    for (
+      let i = 0;
+      i < FAKE_PLAYER_COUNT;
+      i++
+    ) {
+
+      const position = i + 1;
+
+
+      let score;
+
+      if (
+        position === 1
+      ) {
+
+        score =
+          FAKE_TOP_SCORE;
+
+      } else if (
+        position === FAKE_PLAYER_COUNT
+      ) {
+
+        score = 1;
+
+      } else {
+
+        /*
+          Smooth descending distribution.
+
+          #1     = 440,000,000
+          #11,000 = 1
+
+          Higher ranks have much larger
+          differences so the leaderboard
+          looks more natural.
+        */
+
+        const ratio =
+          (position - 1) /
+          (FAKE_PLAYER_COUNT - 1);
+
+        score =
+          Math.max(
+            1,
+            Math.round(
+              FAKE_TOP_SCORE *
+              Math.pow(
+                1 - ratio,
+                1.35
+              )
+            )
+          );
+
+      }
+
+
+      const firstName =
+        FAKE_FIRST_NAMES[
+          i %
+          FAKE_FIRST_NAMES.length
+        ];
+
+
+      const number =
+        String(position)
+          .padStart(5, "0");
+
+
+      players.push({
+
+        telegram_id:
+          "fake_" + number,
+
+        username:
+          null,
+
+        first_name:
+          firstName +
+          " Qivo " +
+          number,
+
+        balance:
+          score,
+
+        fake:
+          true,
+
+        fakeRank:
+          position
+
+      });
+
+    }
+
+
+    return players;
+  }
+
+
+  /*
+    Generated once and reused.
+
+    These users are ONLY for the
+    visual leaderboard.
+
+    They are NOT saved in Supabase.
+  */
+
+  const fakeLeaderboard =
+    generateFakePlayers();
 
 
   /* ==================================================
@@ -2793,7 +3005,18 @@
       );
 
 
+    container.innerHTML =
+      "Loading leaderboard...";
+
+
     try {
+
+      /*
+        Get real users from Supabase.
+
+        Fake users are NOT requested from
+        Supabase and are never stored there.
+      */
 
       const data =
         await callAPI(
@@ -2801,91 +3024,344 @@
         );
 
 
-      const rows =
-        data.leaderboard || [];
+      const realRows =
+        Array.isArray(data.leaderboard)
+          ? data.leaderboard
+          : [];
 
 
-      if (!rows.length) {
+      /*
+        Convert real users into the same
+        format as fake users.
+      */
 
-        container.innerHTML =
-          "No players yet.";
+      const realPlayers =
+        realRows.map(
+          player => {
 
-        return;
-      }
+            return {
 
+              telegram_id:
+                player.telegram_id,
 
-      container.innerHTML =
-        "";
+              username:
+                player.username || null,
 
-
-      let myPosition =
-        "-";
-
-
-      rows.forEach(
-        (player, index) => {
-
-          const row =
-            document.createElement(
-              "div"
-            );
-
-
-          row.className =
-            "leaderboard-row";
-
-
-          const name =
-            player.username
-              ? "@" + player.username
-              : (
+              first_name:
                 player.first_name ||
-                "QIVO Player"
-              );
+                "QIVO Player",
 
+              balance:
+                Number(
+                  player.balance || 0
+                ),
 
-          row.innerHTML =
-            `
-              <div class="rank">
-                ${index + 1}
-              </div>
+              fake:
+                false
 
-              <div class="player">
-                ${escapeHTML(name)}
-              </div>
+            };
 
-              <div class="score">
-                ${Number(player.balance || 0).toLocaleString("en-US")}
-              </div>
-            `;
-
-
-          container.appendChild(
-            row
-          );
-
-
-          if (
-            tg &&
-            tg.initDataUnsafe &&
-            tg.initDataUnsafe.user &&
-            Number(player.telegram_id) ===
-            Number(tg.initDataUnsafe.user.id)
-          ) {
-
-            myPosition =
-              "#" +
-              (index + 1);
           }
+        );
+
+
+      /*
+        Combine:
+
+        11,000 fake players
+        +
+        all real players
+      */
+
+      const allPlayers =
+        fakeLeaderboard.concat(
+          realPlayers
+        );
+
+
+      /*
+        Sort everyone by current
+        balance from highest to lowest.
+
+        This means when a real user
+        spends points, their rank
+        automatically changes.
+      */
+
+      allPlayers.sort(
+        function(a, b) {
+
+          const scoreA =
+            Number(a.balance) || 0;
+
+          const scoreB =
+            Number(b.balance) || 0;
+
+          return scoreB - scoreA;
 
         }
       );
 
 
-      document.getElementById(
-        "myRank"
-      ).textContent =
-        myPosition;
+      /*
+        Find current Telegram user.
+      */
+
+      let currentUserId =
+        null;
+
+
+      if (
+        tg &&
+        tg.initDataUnsafe &&
+        tg.initDataUnsafe.user
+      ) {
+
+        currentUserId =
+          String(
+            tg.initDataUnsafe.user.id
+          );
+
+      }
+
+
+      /*
+        Find user's exact position.
+      */
+
+      let myIndex =
+        -1;
+
+
+      if (currentUserId) {
+
+        myIndex =
+          allPlayers.findIndex(
+            function(player) {
+
+              return (
+                !player.fake &&
+                String(
+                  player.telegram_id
+                ) ===
+                currentUserId
+              );
+
+            }
+          );
+
+      }
+
+
+      if (myIndex >= 0) {
+
+        document.getElementById(
+          "myRank"
+        ).textContent =
+          "#" +
+          (myIndex + 1);
+
+      } else {
+
+        document.getElementById(
+          "myRank"
+        ).textContent =
+          "-";
+
+      }
+
+
+      /*
+        Header / summary.
+      */
+
+      let html =
+        "";
+
+      html +=
+        `
+          <div class="leaderboard-summary">
+            🏆 11,000 QIVO players are competing
+          </div>
+        `;
+
+
+      /*
+        Determine which rows should
+        actually be rendered.
+
+        We keep the complete 11,000+
+        player list in memory for ranking,
+        but don't create 11,000 DOM
+        elements on a phone.
+      */
+
+      const visibleIndexes =
+        new Set();
+
+
+      /*
+        Always show top 100.
+      */
+
+      const topCount =
+        Math.min(
+          100,
+          allPlayers.length
+        );
+
+
+      for (
+        let i = 0;
+        i < topCount;
+        i++
+      ) {
+
+        visibleIndexes.add(i);
+
+      }
+
+
+      /*
+        Show players around current
+        user's position too.
+      */
+
+      if (myIndex >= 0) {
+
+        for (
+          let i =
+            Math.max(
+              0,
+              myIndex - 2
+            );
+
+          i <=
+            Math.min(
+              allPlayers.length - 1,
+              myIndex + 2
+            );
+
+          i++
+        ) {
+
+          visibleIndexes.add(i);
+
+        }
+
+      }
+
+
+      const sortedIndexes =
+        Array.from(
+          visibleIndexes
+        ).sort(
+          (a, b) =>
+            a - b
+        );
+
+
+      let previousIndex =
+        -1;
+
+
+      sortedIndexes.forEach(
+        function(index) {
+
+          /*
+            Add separator when there
+            is a hidden section.
+          */
+
+          if (
+            previousIndex !== -1 &&
+            index > previousIndex + 1
+          ) {
+
+            html +=
+              `
+                <div class="leaderboard-separator">
+                  • • •
+                </div>
+              `;
+
+          }
+
+
+          const player =
+            allPlayers[index];
+
+
+          const isMe =
+            !player.fake &&
+            currentUserId &&
+            String(
+              player.telegram_id
+            ) ===
+            currentUserId;
+
+
+          const rowClass =
+            isMe
+              ? "leaderboard-row me"
+              : "leaderboard-row";
+
+
+          let name;
+
+
+          if (player.fake) {
+
+            name =
+              player.first_name;
+
+          } else if (
+            player.username
+          ) {
+
+            name =
+              "@" +
+              player.username;
+
+          } else {
+
+            name =
+              player.first_name ||
+              "QIVO Player";
+
+          }
+
+
+          html +=
+            `
+              <div class="${rowClass}">
+                <div class="rank">
+                  #${index + 1}
+                </div>
+
+                <div class="player">
+                  ${escapeHTML(name)}
+                  ${isMe ? " 👑" : ""}
+                </div>
+
+                <div class="score">
+                  ${Number(
+                    player.balance || 0
+                  ).toLocaleString("en-US")}
+                </div>
+              </div>
+            `;
+
+
+          previousIndex =
+            index;
+
+        }
+      );
+
+
+      container.innerHTML =
+        html;
 
 
     } catch (error) {
@@ -2896,8 +3372,23 @@
       );
 
 
-      container.textContent =
-        "Unable to load leaderboard.";
+      container.innerHTML =
+        `
+          <div style="
+            text-align:center;
+            padding:15px;
+            font-size:11px;
+            opacity:.55;
+          ">
+            Unable to load leaderboard.
+          </div>
+        `;
+
+
+      document.getElementById(
+        "myRank"
+      ).textContent =
+        "-";
     }
   }
 
